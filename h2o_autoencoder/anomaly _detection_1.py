@@ -13,10 +13,11 @@ def main():
 
     # train_data=h2o.import_file("/home/wso2123/My Work/H2O_Anomaly/mnist/train.csv")
     # test_data=h2o.import_file("/home/wso2123/My Work/H2O_Anomaly/mnist/test.csv")
-    data_set1="/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected"
-    data_set2="/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected"
+    data_set1="/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
+
 
     full_frame = h2o.import_file(data_set1)
+
 
     # Split the data Frame into two random frames according to the given ratio
     (train_data, test_data) = full_frame.split_frame([0.7])
