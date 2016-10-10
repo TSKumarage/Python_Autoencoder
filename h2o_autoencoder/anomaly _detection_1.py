@@ -26,18 +26,17 @@ def main():
     # print "hello"
     #
     # full_frame=musk_frame1.rbind(musk_frame2)
-    #dataset currently used for anomaly detection
+    # dataset currently used for anomaly detection
     current_datraset=cancer_data
 
-    response_variable=0;
+    response_variable=0
+
     full_frame = h2o.import_file(current_datraset)
-
-
+    normal_frame=h2o.import_file("/home/wso2123/My Work/Datasets/Breast cancer wisconsin/Breast cancer wisconsin_normal.csv")
     # Split the data Frame into two random frames according to the given ratio
-    (train_data, test_data) = full_frame.split_frame([0.7])
-    train_data=get_train_frame(full_frame,int(len(full_frame)*0.7))
+    test_data = full_frame.split_frame([0.7])[1]
+    (train_data, validate_data) = normal_frame.split_frame([0.9])
 
-    #
     # Train deep autoencoder learning model on "normal"
     # training data, y ignored
     #
@@ -46,7 +45,7 @@ def main():
 
     anomaly_model = H2OAutoEncoderEstimator(
         activation="Tanh",
-        hidden=[25,12,25],
+        hidden=[25, 12, 25],
         sparse=True,
         l1=1e-4,
         epochs=100,
@@ -56,7 +55,7 @@ def main():
     #
     #
     #
-    anomaly_model.train(x=train_data.names, training_frame=train_data, validation_frame=test_data)
+    anomaly_model.train(x=train_data.names, training_frame=train_data, validation_frame=validate_data)
     # mat=anomaly_model.model_performance(test_data)
     # mat.show()
     #
@@ -65,22 +64,25 @@ def main():
     error_str = recon_error.get_frame_data()
 
     err_list = map(float, error_str.split("\n")[1:-1])
-    max_err=max(err_list)
-    print "Max error in training data:",max(err_list)
+    max_err = max(err_list)
+    print "Train data size: ", len(train_data)
+    print "Validation data size: ", len(validate_data)
+    print "Test data size: ", len(test_data)
+    print "Max error in training data:", max(err_list)
     print "anomaly model train mse: ", anomaly_model.mse()
     # Compute reconstruction, error with the Anomaly
     # detection app (MSE between output and input layers)
     recon_error = anomaly_model.anomaly(test_data, False)
-    error_str=recon_error.get_frame_data()
+    error_str = recon_error.get_frame_data()
 
-    err_list=map(float,error_str.split("\n")[1:-1])
-    quntile=0.95
+    err_list=map(float, error_str.split("\n")[1:-1])
+    #quntile=0.95
     #
     threshold = max_err
         # get_percentile_threshold(quntile,err_list)
 
-    print "Quntile used: ", quntile
-    print "The following test points are reconstructed with an error greater than: ",threshold
+    # print "Quntile used: ", quntile
+    print "The following test points are reconstructed with an error greater than: ", threshold
 
     tp = 0
     fp = 0
@@ -88,19 +90,19 @@ def main():
     fn = 0
     cnt = 0
 
-    list=test_data["diagnosis"]
+    lbl_list = test_data["diagnosis"]
 
     for i in range(len(recon_error) - 1):
-        if(err_list[i]>threshold):
-            if(list[i,0]=="b"):
-                fp=fp+1
+        if err_list[i] > threshold:
+            if lbl_list[i, 0] == "B":
+                fp += 1
             else:
-                tp=tp+1
+                tp += 1
         else:
-            if (list[i,0]=="b"):
-                fn = fn + 1
+            if lbl_list[i, 0] == "B":
+                tn += 1
             else:
-                tn = tn + 1
+                fn += 1
 
     print "max: ", max(err_list)
     print "TP :", tp, "/n"
@@ -115,17 +117,19 @@ def main():
     # test_recon = anomaly_model.predict(test_data)
     # test_recon.summary()
 
-def get_percentile_threshold(quntile,data_frame):
+
+def get_percentile_threshold(quntile, data_frame):
     var = np.array(data_frame)  # input array
     return np.percentile(var, quntile*100)
 
-def get_train_frame(frame,size):
-    list = frame["diagnosis"]
-    new_frame=[]
-    for i in range(len(list)):
-        if(list[i,0]=="g"):
-            if len(new_frame)==0:
-                new_frame=frame[i,0:]
+
+def get_train_frame(frame, size):
+    lbl_list = frame["diagnosis"]
+    new_frame = []
+    for i in range(len(lbl_list)):
+        if lbl_list[i, 0] == "B":
+            if len(new_frame) == 0:
+                new_frame = frame[i, 0:]
             else:
                 new_frame=new_frame.rbind(frame[i,0:])
     if len(new_frame)>size:
