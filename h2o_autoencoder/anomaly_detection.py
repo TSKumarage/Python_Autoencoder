@@ -4,7 +4,7 @@ import h2o.frame
 import h2o.model.metrics_base
 import numpy as np
 from h2o.estimators.deeplearning import H2OAutoEncoderEstimator
-
+from tqdm import tqdm
 
 def main():
     os.environ['NO_PROXY'] = 'localhost'
@@ -14,14 +14,19 @@ def main():
 
     # train_data=h2o.import_file("/home/wso2123/My Work/H2O_Anomaly/mnist/train.csv")
     # test_data=h2o.import_file("/home/wso2123/My Work/H2O_Anomaly/mnist/test.csv")
-    data_set1="/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected"
-    data_set2="/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected"
+    data_set1 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_alpha.csv"
+    data_set2 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv"
+    data_set3 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected"
 
     full_frame = h2o.import_file(data_set1)
+    (train_data, validate_data) = h2o.import_file(data_set2).split_frame([0.8])
+    # h2o.export_file(train_data,"/home/wso2123/My Work/Datasets/KDD Cup/train.csv")
+    # h2o.export_file(validate_data, "/home/wso2123/My Work/Datasets/KDD Cup/validate.csv")
 
     # Split the data Frame into two random frames according to the given ratio
-    (train_data, test_data) = full_frame.split_frame([0.7])
-    #train_data=get_train_frame(full_frame, int(len(full_frame)*0.7))
+    test_data = full_frame.split_frame([0.7])[1]
+    # h2o.export_file(test_data, "/home/wso2123/My Work/Datasets/KDD Cup/test.csv")
+
     #
     # Train deep autoencoder learning model on "normal"
     # training data, y ignored
@@ -36,7 +41,8 @@ def main():
     #
     #
     #
-    anomaly_model.train(x=train_data.names, training_frame=train_data, validation_frame=test_data)
+    print train_data
+    anomaly_model.train(x=train_data.names, training_frame=train_data, validation_frame=validate_data)
     # mat=anomaly_model.model_performance(test_data)
     # mat.show()
     #
@@ -69,7 +75,7 @@ def main():
     str = test_data.get_frame_data()
     list = str.split("\n")
 
-    for i in range(len(recon_error) - 1):
+    for i in tqdm(range(len(recon_error) - 1)):
         if err_list[i] > threshold:
             if list[i+1].split(",")[-1] == "\"normal.\"":
                 fp += 1
