@@ -11,7 +11,7 @@ def main():
 
     # Start H2O on your local machine
     h2o.init()
-
+    recall = 16.66
     # Dataset paths
     mnist_data_train="/home/wso2123/My Work/H2O_Anomaly/mnist/train.csv"
     mnist_data_test="/home/wso2123/My Work/H2O_Anomaly/mnist/test.csv"
@@ -31,11 +31,9 @@ def main():
 
     response_variable=0
 
-    full_frame = h2o.import_file(current_datraset)
-    normal_frame=h2o.import_file("/home/wso2123/My Work/Datasets/Breast cancer wisconsin/Breast cancer wisconsin_normal.csv")
-    # Split the data Frame into two random frames according to the given ratio
-    test_data = full_frame.split_frame([0.7])[1]
-    (train_data, validate_data) = normal_frame.split_frame([0.9])
+    validate_data = h2o.import_file("/home/wso2123/My Work/Datasets/Breast cancer wisconsin/validate.csv")
+    train_data = h2o.import_file("/home/wso2123/My Work/Datasets/Breast cancer wisconsin/train.csv")
+    test_data = h2o.import_file("/home/wso2123/My Work/Datasets/Breast cancer wisconsin/test.csv")
 
     # Train deep autoencoder learning model on "normal"
     # training data, y ignored
@@ -45,7 +43,7 @@ def main():
 
     anomaly_model = H2OAutoEncoderEstimator(
         activation="Tanh",
-        hidden=[25, 12, 25],
+        hidden=[9, 9, 9],
         sparse=True,
         l1=1e-4,
         epochs=100,
@@ -112,6 +110,7 @@ def main():
     print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", 100*float(tp)/(tp+fn)
     print "Precision (TP / (TP + FP) :", 100*float(tp)/(tp+fp)
     print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200*float(tp)/(2*tp+fp+fn)
+
 
     # Note: Testing = Reconstructing the test dataset
     # test_recon = anomaly_model.predict(test_data)

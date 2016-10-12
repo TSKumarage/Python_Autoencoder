@@ -10,16 +10,16 @@ def main():
     os.environ['NO_PROXY'] = 'localhost'
 
     # Start H2O on your local machine
-    h2o.init()
+    h2o.init(port=54325)
 
     # train_data=h2o.import_file("/home/wso2123/My Work/H2O_Anomaly/mnist/train.csv")
     # test_data=h2o.import_file("/home/wso2123/My Work/H2O_Anomaly/mnist/test.csv")
-    data_set1 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_alpha.csv"
+    data_set1 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected"
     data_set2 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv"
     data_set3 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected"
 
     full_frame = h2o.import_file(data_set1)
-    (train_data, validate_data) = h2o.import_file(data_set2).split_frame([0.8])
+    (train_data, validate_data) = h2o.import_file(data_set2).split_frame([0.9])
     # h2o.export_file(train_data,"/home/wso2123/My Work/Datasets/KDD Cup/train.csv")
     # h2o.export_file(validate_data, "/home/wso2123/My Work/Datasets/KDD Cup/validate.csv")
 
@@ -33,10 +33,10 @@ def main():
     #
     anomaly_model = H2OAutoEncoderEstimator(
         activation="Tanh",
-        hidden=[12, 12, 12],
+        hidden=[9, 9, 9],
         sparse=True,
         l1=1e-4,
-        epochs=100,
+        epochs=10,
     )
     #
     #
@@ -62,9 +62,9 @@ def main():
     quntile = 0.95
 
     threshold = max_err
-    #threshold = get_percentile_threshold(quntile, err_list)
 
-    print "Quntile used: ", quntile
+    # threshold = get_percentile_threshold(quntile, err_list)
+    # print "Quntile used: ", quntile
     print "The following test points are reconstructed with an error greater than: ", threshold
 
     tp = 0
@@ -87,7 +87,10 @@ def main():
             else:
                 fn += 1
 
-    print "max: ", max(err_list)
+    print "Training dataset size: ", train_data.nrow
+    print "Validation dataset size: ", validate_data.nrow
+    print "Test datset size: ", test_data.nrow
+    print "maximum error in test data set : ", max(err_list)
     print "TP :", tp, "/n"
     print "FP :", fp, "/n"
     print "TN :", tn, "/n"

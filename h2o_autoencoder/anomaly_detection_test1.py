@@ -77,7 +77,7 @@ def main():
     threshold = get_percentile_threshold(quntile,err_list)
 
     print "Quntile used: ", quntile
-    print "The following test points are reconstructed with an error greater than: ",threshold
+    print "The following test points are reconstructed with an error greater than: ", threshold
 
     tp = 0
     fp = 0

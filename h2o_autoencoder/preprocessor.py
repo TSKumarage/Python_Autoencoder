@@ -6,10 +6,10 @@ import pandas as pd
 from tqdm import tqdm
 
 
-
 def main():
     # Dataset paths
     cancer_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
+    cancer_data_normal = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/Breast cancer wisconsin_normal.csv"
     musk_clean1 = "/home/wso2123/My Work/Datasets/Musk/clean1.data"
     musk_clean2 = "/home/wso2123/My Work/Datasets/Musk/clean2.data"
     ionosphere_data = "/home/wso2123/My Work/Datasets/Ionosphere/ionosphere.csv"
@@ -21,11 +21,18 @@ def main():
     # # Start H2O on your local machine
     # h2o.init()
 
-    full_frame = pd.read_csv(kddcup_data_set1)
-    full_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_alpha.csv")
-    normal_frame = get_pandas_frame(full_frame, "normal.")
-    normal_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv",
-                        index=False)
+    full_frame = pd.read_csv(cancer_data)
+    normal_frame = pd.read_csv(cancer_data_normal)
+    test_frame = get_test_frame(full_frame, 0.3)
+    validate_frame = normal_frame.sample(frac=0.1, random_state=200)
+    train_frame = normal_frame.drop(validate_frame.index)
+    validate_frame.to_csv("/home/wso2123/My Work/Datasets/Breast cancer wisconsin/validate.csv")
+    train_frame.to_csv("/home/wso2123/My Work/Datasets/Breast cancer wisconsin/train.csv")
+    test_frame.to_csv("/home/wso2123/My Work/Datasets/Breast cancer wisconsin/test.csv")
+
+    #full_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_alpha.csv", index=False)
+    # normal_frame = get_pandas_frame(full_frame, "normal.")
+    # normal_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv")
     print "Done"
     #print normal_frame
     # anomaly_frame = get_anomaly_frame(full_frame,"C35","g")
@@ -34,6 +41,10 @@ def main():
     # h2o.export_file(anomaly_frame, "/home/wso2123/My Work/Datasets/Ionosphere/Ionosphere_anomaly.csv")
     # test_frame = np.random.choice(full_frame., int(len(full_frame)*0.7))
     # print test_frame
+
+
+def get_test_frame(frame, sample_ratio):
+    return frame.sample(frac=sample_ratio, random_state=200)
 
 
 def get_normal_frame(frame, response_var, lbl):
@@ -78,7 +89,6 @@ def get_train_frame(frame):
     # lbl_list = frame["C42"]
     test_frame=pd.DataFrame(frame)
     new_frame = pd.DataFrame()
-    new_frame
 
     for i in tqdm(range(len(lbl_list))):
         if lbl_list[i].split(",")[-1] == "\"normal.\"":
