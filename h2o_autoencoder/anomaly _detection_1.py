@@ -27,7 +27,7 @@ def main():
     #
     # full_frame=musk_frame1.rbind(musk_frame2)
     # dataset currently used for anomaly detection
-    current_datraset=cancer_data
+    current_datraset = cancer_data
 
     response_variable=0
 
