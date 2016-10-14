@@ -18,9 +18,9 @@ def model_build():
 
     kddcup_data_set1 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected"
     kddcup_data_set1_normal = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv"
-    kddcup_data_train_dataset = "/home/wso2123/My Work/Datasets/KDD Cup/uncorrected_train.csv"
-    kddcup_data_validate_dataset ="/home/wso2123/My Work/Datasets/KDD Cup/validate.csv"
-    kddcup_data_test_dataset = "/home/wso2123/My Work/Datasets/KDD Cup/test.csv"
+    kddcup_data_train_dataset = "/home/wso2123/My Work/Datasets/KDD Cup/f_uncorrected_train.csv"
+    kddcup_data_validate_dataset = "/home/wso2123/My Work/Datasets/KDD Cup/f_validate.csv"
+    kddcup_data_test_dataset = "/home/wso2123/My Work/Datasets/KDD Cup/f_test.csv"
 
     train_data = h2o.import_file(kddcup_data_train_dataset)
     validate_data = h2o.import_file(kddcup_data_validate_dataset)

@@ -2,7 +2,6 @@ import os
 import h2o
 import h2o.frame
 import numpy as np
-from tqdm import tqdm
 import h2o.model.metrics_base
 from h2o.estimators.deeplearning import H2OAutoEncoderEstimator
 
@@ -11,26 +10,27 @@ def main():
     os.environ['NO_PROXY'] = 'localhost'
     # Start H2O on your local machine
     h2o.init()
-    model_build()
+
+    for i in range(10):
+        model_build()
 
 
 def model_build():
 
-    bc_data_set1 = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
-    bc_data_train_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/train.csv"
-    bc_data_validate_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/validate.csv"
-    bc_data_test_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/test.csv"
+    train_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/uncorrected_train.csv"
+    validate_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/validate.csv"
+    test_dataset =  "/home/wso2123/My Work/Datasets/Ionosphere/test.csv"
 
-    train_data = h2o.import_file(bc_data_train_dataset)
-    validate_data = h2o.import_file(bc_data_validate_dataset)
-    test_data = h2o.import_file(bc_data_test_dataset)
+    test_data = h2o.import_file(test_dataset)
+    train_data = h2o.import_file(train_dataset)
+    validate_data = h2o.import_file(validate_dataset)
 
     #
     # Train deep autoencoder learning model on "normal"
     # training data, y ignored
     #
     anomaly_model = H2OAutoEncoderEstimator(
-        activation="Tanh",
+        activation="TanhWithDropout",
         hidden=[9, 9, 9],
         sparse=True,
         l1=1e-4,
@@ -55,7 +55,10 @@ def model_build():
     quntile = 0.95
 
     threshold = max_err
+    threshold = get_percentile_threshold(quntile, err_list)
 
+    # threshold = get_percentile_threshold(quntile, err_list)
+    print "Quntile used: ", quntile
     print "The following test points are reconstructed with an error greater than: ", threshold
 
     tp = 0
@@ -63,16 +66,16 @@ def model_build():
     tn = 0
     fn = 0
 
-    lbl_list = test_data["diagnosis"]
+    lbl_list = test_data[34]
 
     for i in range(len(recon_error) - 1):
         if err_list[i] > threshold:
-            if lbl_list[i, 0] == "B":
+            if lbl_list[i, 0] == "g":
                 fp += 1
             else:
                 tp += 1
         else:
-            if lbl_list[i, 0] == "B":
+            if lbl_list[i, 0] == "g":
                 tn += 1
             else:
                 fn += 1

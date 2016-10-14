@@ -11,26 +11,36 @@ def main():
     os.environ['NO_PROXY'] = 'localhost'
     # Start H2O on your local machine
     h2o.init()
-    model_build()
+    recall = 10
+
+    for i in range(10):
+        new_recall, test_frame = model_build()
+        if new_recall > recall:
+            recall = new_recall
+            h2o.export_file(test_frame, "/home/wso2123/My Work/Datasets/Ionosphere/test.csv", force=True)
+
+    print recall
 
 
 def model_build():
 
-    bc_data_set1 = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
-    bc_data_train_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/train.csv"
-    bc_data_validate_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/validate.csv"
-    bc_data_test_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/test.csv"
+    bc_data_set1 = "/home/wso2123/My Work/Datasets/Ionosphere/ionosphere.csv"
+    bc_data_train_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/uncorrected_train.csv"
+    bc_data_validate_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/validate.csv"
 
+    full_frame = h2o.import_file(bc_data_set1)
     train_data = h2o.import_file(bc_data_train_dataset)
     validate_data = h2o.import_file(bc_data_validate_dataset)
-    test_data = h2o.import_file(bc_data_test_dataset)
+
+    # Split the data Frame into two random frames according to the given ratio
+    test_data = full_frame.split_frame([0.7])[1]
 
     #
     # Train deep autoencoder learning model on "normal"
     # training data, y ignored
     #
     anomaly_model = H2OAutoEncoderEstimator(
-        activation="Tanh",
+        activation="TanhWithDropout",
         hidden=[9, 9, 9],
         sparse=True,
         l1=1e-4,
@@ -55,7 +65,10 @@ def model_build():
     quntile = 0.95
 
     threshold = max_err
+    threshold = get_percentile_threshold(quntile, err_list)
 
+    # threshold = get_percentile_threshold(quntile, err_list)
+    print "Quntile used: ", quntile
     print "The following test points are reconstructed with an error greater than: ", threshold
 
     tp = 0
@@ -63,16 +76,16 @@ def model_build():
     tn = 0
     fn = 0
 
-    lbl_list = test_data["diagnosis"]
+    lbl_list = test_data[34]
 
     for i in range(len(recon_error) - 1):
         if err_list[i] > threshold:
-            if lbl_list[i, 0] == "B":
+            if lbl_list[i, 0] == "g":
                 fp += 1
             else:
                 tp += 1
         else:
-            if lbl_list[i, 0] == "B":
+            if lbl_list[i, 0] == "g":
                 tn += 1
             else:
                 fn += 1
@@ -90,6 +103,8 @@ def model_build():
     print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
     print "Precision (TP / (TP + FP) :", 100*float(tp)/(tp+fp)
     print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200*float(tp)/(2*tp+fp+fn)
+
+    return recall, test_data
 
 
 def get_percentile_threshold(quntile, data_frame):

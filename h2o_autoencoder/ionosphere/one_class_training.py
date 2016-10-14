@@ -12,31 +12,32 @@ def main():
     # Start H2O on your local machine
     h2o.init()
     model_build()
+   
 
 
 def model_build():
 
-    bc_data_set1 = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
-    bc_data_train_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/train.csv"
-    bc_data_validate_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/validate.csv"
-    bc_data_test_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/test.csv"
+    train_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/train.csv"
+    validate_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/validate.csv"
+    test_dataset =  "/home/wso2123/My Work/Datasets/Ionosphere/test.csv"
 
-    train_data = h2o.import_file(bc_data_train_dataset)
-    validate_data = h2o.import_file(bc_data_validate_dataset)
-    test_data = h2o.import_file(bc_data_test_dataset)
+    test_data = h2o.import_file(test_dataset)
+    train_data = h2o.import_file(train_dataset)
+    validate_data = h2o.import_file(validate_dataset)
 
     #
     # Train deep autoencoder learning model on "normal"
     # training data, y ignored
     #
     anomaly_model = H2OAutoEncoderEstimator(
-        activation="Tanh",
+        activation="tanh_with_dropout",
         hidden=[9, 9, 9],
         sparse=True,
         l1=1e-4,
         epochs=100,
     )
 
+    print anomaly_model.activation
     anomaly_model.train(x=train_data.names, training_frame=train_data, validation_frame=validate_data)
 
     recon_error = anomaly_model.anomaly(train_data, False)
@@ -55,7 +56,6 @@ def model_build():
     quntile = 0.95
 
     threshold = max_err
-
     print "The following test points are reconstructed with an error greater than: ", threshold
 
     tp = 0
@@ -63,16 +63,16 @@ def model_build():
     tn = 0
     fn = 0
 
-    lbl_list = test_data["diagnosis"]
+    lbl_list = test_data[34]
 
     for i in range(len(recon_error) - 1):
         if err_list[i] > threshold:
-            if lbl_list[i, 0] == "B":
+            if lbl_list[i, 0] == "g":
                 fp += 1
             else:
                 tp += 1
         else:
-            if lbl_list[i, 0] == "B":
+            if lbl_list[i, 0] == "g":
                 tn += 1
             else:
                 fn += 1
