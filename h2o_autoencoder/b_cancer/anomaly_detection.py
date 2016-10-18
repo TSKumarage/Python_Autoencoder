@@ -52,7 +52,7 @@ def model_build():
     error_str = recon_error.get_frame_data()
 
     err_list = map(float, error_str.split("\n")[1:-1])
-    quntile = 0.95
+    quntile = 0.65
 
     threshold = get_percentile_threshold(quntile, err_list)
 

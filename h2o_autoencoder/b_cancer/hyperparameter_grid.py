@@ -6,24 +6,42 @@ import h2o.model.metrics_base
 from h2o.estimators.deeplearning import H2OAutoEncoderEstimator
 
 
+global full_frame
+global train_data
+global validate_data
+global test_data
+
+
 def main():
     os.environ['NO_PROXY'] = 'localhost'
     # Start H2O on your local machine
     h2o.init()
+    recall = 10
+    bc_data_set1 = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
+    bc_data_train_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/uncorrected_train.csv"
+    bc_data_validate_dataset = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/validate.csv"
 
-    for i in range(1):
-        model_build()
+    global full_frame
+    global train_data
+    global validate_data
+    global test_data
+
+    full_frame = h2o.import_file(bc_data_set1)
+    train_data = h2o.import_file(bc_data_train_dataset)
+    validate_data = h2o.import_file(bc_data_validate_dataset)
+    test_data = full_frame.split_frame([0.7])[1]
+    parameters = 0
+
+    for i in range(1, 30):
+        new_recall = model_build(i)
+        if new_recall > recall:
+            recall = new_recall
+            parameters = i
+        print parameters, "---", recall
+    print "Final parameters :", parameters, recall
 
 
-def model_build():
-
-    train_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/uncorrected_train.csv"
-    validate_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/validate.csv"
-    test_dataset =  "/home/wso2123/My Work/Datasets/Ionosphere/test.csv"
-
-    test_data = h2o.import_file(test_dataset)
-    train_data = h2o.import_file(train_dataset)
-    validate_data = h2o.import_file(validate_dataset)
+def model_build(i):
 
     #
     # Train deep autoencoder learning model on "normal"
@@ -31,7 +49,7 @@ def model_build():
     #
     anomaly_model = H2OAutoEncoderEstimator(
         activation="TanhWithDropout",
-        hidden=[27],
+        hidden=[i],
         sparse=True,
         l1=1e-4,
         epochs=100,
@@ -44,55 +62,41 @@ def model_build():
     err_list = map(float, error_str.split("\n")[1:-1])
     max_err = max(err_list)
 
-    print "anomaly model train mse: ", anomaly_model.mse()
-
     # Compute reconstruction, error with the Anomaly
     # detection app (MSE between output and input layers)
     recon_error = anomaly_model.anomaly(test_data, False)
     error_str = recon_error.get_frame_data()
 
     err_list = map(float, error_str.split("\n")[1:-1])
-    quntile = 0.80
+    quntile = 0.95
 
     threshold = max_err
     threshold = get_percentile_threshold(quntile, err_list)
 
     # threshold = get_percentile_threshold(quntile, err_list)
-    print "Quntile used: ", quntile
-    print "The following test points are reconstructed with an error greater than: ", threshold
 
     tp = 0
     fp = 0
     tn = 0
     fn = 0
 
-    lbl_list = test_data[34]
+    lbl_list = test_data["diagnosis"]
 
     for i in range(len(recon_error) - 1):
         if err_list[i] > threshold:
-            if lbl_list[i, 0] == "g":
+            if lbl_list[i, 0] == "B":
                 fp += 1
             else:
                 tp += 1
         else:
-            if lbl_list[i, 0] == "g":
+            if lbl_list[i, 0] == "B":
                 tn += 1
             else:
                 fn += 1
 
     recall = 100*float(tp)/(tp+fn)
 
-    print "Training dataset size: ", train_data.nrow
-    print "Validation dataset size: ", validate_data.nrow
-    print "Test datset size: ", test_data.nrow
-    print "maximum error in test data set : ", max(err_list)
-    print "TP :", tp, "/n"
-    print "FP :", fp, "/n"
-    print "TN :", tn, "/n"
-    print "FN :", fn, "/n"
-    print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
-    print "Precision (TP / (TP + FP) :", 100*float(tp)/(tp+fp)
-    print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200*float(tp)/(2*tp+fp+fn)
+    return recall
 
 
 def get_percentile_threshold(quntile, data_frame):

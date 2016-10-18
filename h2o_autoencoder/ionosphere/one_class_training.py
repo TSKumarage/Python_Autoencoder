@@ -19,7 +19,7 @@ def model_build():
 
     train_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/train.csv"
     validate_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/validate.csv"
-    test_dataset =  "/home/wso2123/My Work/Datasets/Ionosphere/test.csv"
+    test_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/test.csv"
 
     test_data = h2o.import_file(test_dataset)
     train_data = h2o.import_file(train_dataset)
@@ -31,13 +31,12 @@ def model_build():
     #
     anomaly_model = H2OAutoEncoderEstimator(
         activation="tanh_with_dropout",
-        hidden=[9, 9, 9],
+        hidden=[27],
         sparse=True,
         l1=1e-4,
         epochs=100,
     )
 
-    print anomaly_model.activation
     anomaly_model.train(x=train_data.names, training_frame=train_data, validation_frame=validate_data)
 
     recon_error = anomaly_model.anomaly(train_data, False)
@@ -64,7 +63,6 @@ def model_build():
     fn = 0
 
     lbl_list = test_data[34]
-
     for i in range(len(recon_error) - 1):
         if err_list[i] > threshold:
             if lbl_list[i, 0] == "g":
