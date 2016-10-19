@@ -17,21 +17,21 @@ def main():
     kddcup_data_set1_normal = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected_normal.csv"
     kddcup_data_set2 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected"
 
-    os.environ['NO_PROXY'] = 'localhost'
+    # os.environ['NO_PROXY'] = 'localhost'
+    #
+    # # Start H2O on your local machine
+    # h2o.init()
 
-    # Start H2O on your local machine
-    h2o.init()
+    full_frame = pd.read_csv(musk_clean2)
+    print full_frame.iloc[0:1, :]
+    print len(full_frame)
+    # normal_frame = get_pandas_frame(full_frame, 0.)
+    # normal_frame.to_csv("/home/wso2123/My Work/Datasets/Musk/clean2_normal.csv", index=False)
 
-    full_frame = h2o.import_file(musk_clean2)
-    normal_frame = get_normal_frame(full_frame, full_frame.ncol-1, 0)
-    h2o.export_file(normal_frame, "/home/wso2123/My Work/Datasets/Musk/clean2_normal.csv")
-    full_frame = h2o.import_file(musk_clean1)
-    normal_frame = get_normal_frame(full_frame, full_frame.ncol - 1, 0)
-    h2o.export_file(normal_frame, "/home/wso2123/My Work/Datasets/Musk/clean1_normal.csv")
     # get_normal_frame(full_frame, len(full_frame.columns)-1, )
     # uncorrected_train_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/f_uncorrected_train.csv", index=False)
     #full_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_alpha.csv", index=False)
-    # normal_frame = get_pandas_frame(full_frame, "normal.")
+    # normal_frame = get_"pandas_frame(full_frame, "normal.")
     # normal_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv")
     print "Done"
     #print normal_frame
@@ -51,7 +51,7 @@ def get_normal_frame(frame, response_var, lbl):
 
     lbl_list = frame[response_var]
     new_frame = []
-    for i in range(len(lbl_list)):
+    for i in tqdm(range(len(lbl_list))):
         if lbl_list[i, 0] == lbl:
             if len(new_frame) == 0:
                 new_frame = frame[i, 0:]
@@ -75,7 +75,7 @@ def get_anomaly_frame(frame, response_var, lbl):
 
 def get_pandas_frame(frame, lbl):
     lbl_list = frame.iloc[:, -1]
-    new_frame = frame.iloc[0, :]
+    new_frame = frame.iloc[1016, :]
     for i in tqdm(range(1, len(lbl_list))):
         if lbl_list.iloc[i] == lbl:
             df1 = frame.iloc[i, :]

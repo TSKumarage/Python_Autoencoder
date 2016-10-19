@@ -4,18 +4,13 @@ from tqdm import tqdm
 
 def main():
     # Dataset paths
-    cancer_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
-    cancer_data_normal = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/Breast cancer wisconsin_normal.csv"
-    musk_clean1 = "/home/wso2123/My Work/Datasets/Musk/clean1.data"
-    musk_clean2 = "/home/wso2123/My Work/Datasets/Musk/clean2.data"
-    ionosphere_data = "/home/wso2123/My Work/Datasets/Ionosphere/ionosphere.csv"
-    ionosphere_data_normal = "/home/wso2123/My Work/Datasets/Ionosphere/Ionosphere_normal.csv"
-    kddcup_data_set1 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected"
-    kddcup_data_set1_normal = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected_normal.csv"
-    kddcup_data_set2 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected"
+    musk_clean1 = "/home/wso2123/My Work/Datasets/musk/musk_small/musk_clean1.csv"
+    musk_clean1_normal = "/home/wso2123/My Work/Datasets/musk/musk_small/musk_clean1_normal.csv"
+    musk_clean2 = "/home/wso2123/My Work/Datasets/musk/musk_large/musk_clean2.csv"
+    musk_clean2_normal = "/home/wso2123/My Work/Datasets/musk/musk_large/musk_clean2_normal.csv"
 
-    full_frame = pd.read_csv(ionosphere_data)
-    normal_frame = pd.read_csv(ionosphere_data_normal)
+    full_frame = pd.read_csv(musk_clean2)
+    normal_frame = pd.read_csv(musk_clean2_normal)
     print len(full_frame), len(normal_frame), "\n"
     sample_ratio = 1 - (len(full_frame) * 0.7) / len(normal_frame)
 
@@ -30,10 +25,10 @@ def main():
 
     test_frame = get_test_frame(full_frame, 0.3)
     uncorrected_train_frame = full_frame.drop(test_frame.index)
-    validate_frame.to_csv("/home/wso2123/My Work/Datasets/Ionosphere/validate.csv", index=False)
-    train_frame.to_csv("/home/wso2123/My Work/Datasets/Ionosphere/train.csv", index=False)
-    test_frame.to_csv("/home/wso2123/My Work/Datasets/Ionosphere/test.csv", index=False)
-    uncorrected_train_frame.to_csv("/home/wso2123/My Work/Datasets/Ionosphere/uncorrected_train.csv", index=False)
+    validate_frame.to_csv("/home/wso2123/My Work/Datasets/musk/musk_large/clean2_validate.csv", index=False)
+    train_frame.to_csv("/home/wso2123/My Work/Datasets/musk/musk_large/clean2_train.csv", index=False)
+    test_frame.to_csv("/home/wso2123/My Work/Datasets/musk/musk_large/clean2_test.csv", index=False)
+    uncorrected_train_frame.to_csv("/home/wso2123/My Work/Datasets/musk/musk_large/clean2_uncorrected_train.csv", index=False)
 
     print "Task Completed"
 
