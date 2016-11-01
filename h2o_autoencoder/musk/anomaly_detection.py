@@ -22,10 +22,15 @@ def main():
     global test_frame
     global uncorrected_train_frame
 
-    validate_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_validate.csv"
-    train_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_train.csv"
-    uncorrected_train_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_uncorrected_train.csv"
-    test_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_test.csv"
+    validate_data = "/home/wso2123/My Work/Datasets/musk/musk_small/clean1_validate.csv"
+    train_data = "/home/wso2123/My Work/Datasets/musk/musk_small/clean1_train.csv"
+    uncorrected_train_data = "/home/wso2123/My Work/Datasets/musk/musk_small/clean1_uncorrected_train.csv"
+    test_data = "/home/wso2123/My Work/Datasets/musk/musk_small/clean1_test.csv"
+
+    # validate_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_validate.csv"
+    # train_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_train.csv"
+    # uncorrected_train_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_uncorrected_train.csv"
+    # test_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_test.csv"
 
     test_frame = h2o.import_file(test_data)
     train_frame = h2o.import_file(uncorrected_train_data)
@@ -47,10 +52,11 @@ def model_build():
     #
     anomaly_model = H2OAutoEncoderEstimator(
         activation="Tanh",
-        hidden=[166],
+        hidden=[127],
         sparse=True,
         l1=1e-4,
         epochs=100,
+        ignored_columns=train_frame.names[0:2].append(train_frame.names[train_frame.ncol-1])
     )
 
     anomaly_model.train(x=train_frame.names, training_frame=train_frame, validation_frame=validate_frame)
@@ -68,7 +74,7 @@ def model_build():
     error_str = recon_error.get_frame_data()
 
     err_list = map(float, error_str.split("\n")[1:-1])
-    quntile = 0.85
+    quntile = 0.95
 
     threshold = max_err
     threshold = get_percentile_threshold(quntile, err_list)
@@ -84,7 +90,7 @@ def model_build():
     lbl_list = test_frame[test_frame.ncol-1]
     print lbl_list[0, 0] == 1
 
-    for i in range(len(recon_error) - 1):
+    for i in tqdm(range(len(recon_error) - 1)):
         if err_list[i] > threshold:
             if lbl_list[i, 0] == 0:
                 fp += 1

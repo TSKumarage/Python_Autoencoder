@@ -11,18 +11,22 @@ def main():
     # Start H2O on your local machine
     h2o.init()
 
-    for i in range(1):
-        model_build()
+    li = []
+
+    for i in range(1, 30):
+        li.append(model_build(i))
+
+    print li.index(max(li)), max(li)
 
 
-def model_build():
+def model_build(i):
 
     train_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/uncorrected_train.csv"
     validate_dataset = "/home/wso2123/My Work/Datasets/Ionosphere/validate.csv"
     test_dataset =  "/home/wso2123/My Work/Datasets/Ionosphere/test.csv"
 
     test_data = h2o.import_file(test_dataset)
-    train_data = h2o.import_file(train_dataset)
+    train_frame = h2o.import_file(train_dataset)
     validate_data = h2o.import_file(validate_dataset)
 
     #
@@ -31,15 +35,16 @@ def model_build():
     #
     anomaly_model = H2OAutoEncoderEstimator(
         activation="TanhWithDropout",
-        hidden=[27],
+        hidden=[i],
         sparse=True,
         l1=1e-4,
         epochs=100,
+        ignored_columns=train_frame.names[34]
     )
 
-    anomaly_model.train(x=train_data.names, training_frame=train_data, validation_frame=validate_data)
+    anomaly_model.train(x=train_frame.names, training_frame=train_frame, validation_frame=validate_data)
 
-    recon_error = anomaly_model.anomaly(train_data, False)
+    recon_error = anomaly_model.anomaly(train_frame, False)
     error_str = recon_error.get_frame_data()
     err_list = map(float, error_str.split("\n")[1:-1])
     max_err = max(err_list)
@@ -82,7 +87,7 @@ def model_build():
 
     recall = 100*float(tp)/(tp+fn)
 
-    print "Training dataset size: ", train_data.nrow
+    print "Training dataset size: ", train_frame.nrow
     print "Validation dataset size: ", validate_data.nrow
     print "Test datset size: ", test_data.nrow
     print "maximum error in test data set : ", max(err_list)
@@ -93,6 +98,8 @@ def model_build():
     print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
     print "Precision (TP / (TP + FP) :", 100*float(tp)/(tp+fp)
     print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200*float(tp)/(2*tp+fp+fn)
+
+    return recall
 
 
 def get_percentile_threshold(quntile, data_frame):

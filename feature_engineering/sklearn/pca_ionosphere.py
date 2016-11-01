@@ -10,8 +10,8 @@ global complete_frame
 global train_frame
 global validate_frame
 global test_frame
-global d
-global d1
+global train_array
+global test_array
 
 
 def main():
@@ -19,8 +19,8 @@ def main():
     global train_frame
     global validate_frame
     global test_frame
-    global d
-    global d1
+    global train_array
+    global test_array
 
     complete_data = "/home/wso2123/My Work/Datasets/Ionosphere/train.csv"
     train_data = "/home/wso2123/My Work/Datasets/Ionosphere/uncorrected_train.csv"
@@ -51,13 +51,13 @@ def main():
 def model_build(i):
 
     sp_pcs = decomposition.PCA(n_components=i)
-    sp_pcs.fit(d)
-    code = sp_pcs.transform(d1)
+    sp_pcs.fit(train_array)
+    code = sp_pcs.transform(test_array)
     out_put = sp_pcs.inverse_transform(code)
 
     recons_err = []
-    for i in range(len(d1)):
-        recons_err.append(metrics.mean_squared_error(d1[i], out_put[i]))
+    for i in range(len(test_array)):
+        recons_err.append(metrics.mean_squared_error(test_array[i], out_put[i]))
 
     tp = 0
     fp = 0

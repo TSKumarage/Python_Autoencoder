@@ -17,30 +17,47 @@ def main():
     kddcup_data_set1_normal = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected_normal.csv"
     kddcup_data_set2 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data.corrected"
 
-    # os.environ['NO_PROXY'] = 'localhost'
+    complete_data = "/home/wso2123/My Work/Datasets/KDD Cup/train.csv"
+    train_data = "/home/wso2123/My Work/Datasets/KDD Cup/uncorrected_train.csv"
+    validate_data = "/home/wso2123/My Work/Datasets/KDD Cup/validate.csv"
+    test_data = "/home/wso2123/My Work/Datasets/KDD Cup/test.csv"
+
+    os.environ['NO_PROXY'] = 'localhost'
+
+    # Start H2O on your local machine
+    h2o.init()
+
+    # load the CSV file as a numpy matrix
+    complete_frame = h2o.import_file(complete_data)
+    train_frame = h2o.import_file(train_data)
+    validate_frame = h2o.import_file(validate_data)
+    test_frame = h2o.import_file(test_data)
+
+    h2o.export_file(complete_frame, complete_data, force=True)
+    h2o.export_file(train_frame, train_data, force=True)
+    h2o.export_file(test_frame, test_data, force=True)
+    h2o.export_file(validate_frame, validate_data, force=True)
+
+
+    # full_frame = pd.read_csv(musk_clean2)
+    # print full_frame.iloc[0:1, :]
+    # print len(full_frame)
+    # # normal_frame = get_pandas_frame(full_frame, 0.)
+    # # normal_frame.to_csv("/home/wso2123/My Work/Datasets/Musk/clean2_normal.csv", index=False)
     #
-    # # Start H2O on your local machine
-    # h2o.init()
-
-    full_frame = pd.read_csv(musk_clean2)
-    print full_frame.iloc[0:1, :]
-    print len(full_frame)
-    # normal_frame = get_pandas_frame(full_frame, 0.)
-    # normal_frame.to_csv("/home/wso2123/My Work/Datasets/Musk/clean2_normal.csv", index=False)
-
-    # get_normal_frame(full_frame, len(full_frame.columns)-1, )
-    # uncorrected_train_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/f_uncorrected_train.csv", index=False)
-    #full_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_alpha.csv", index=False)
-    # normal_frame = get_"pandas_frame(full_frame, "normal.")
-    # normal_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv")
-    print "Done"
-    #print normal_frame
-    # anomaly_frame = get_anomaly_frame(full_frame,"C35","g")
-
-    #h2o.export_file(normal_frame, "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv")
-    # h2o.export_file(anomaly_frame, "/home/wso2123/My Work/Datasets/Ionosphere/Ionosphere_anomaly.csv")
-    # test_frame = np.random.choice(full_frame., int(len(full_frame)*0.7))
-    # print test_frame
+    # # get_normal_frame(full_frame, len(full_frame.columns)-1, )
+    # # uncorrected_train_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/f_uncorrected_train.csv", index=False)
+    # #full_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_alpha.csv", index=False)
+    # # normal_frame = get_"pandas_frame(full_frame, "normal.")
+    # # normal_frame.to_csv("/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv")
+    # print "Done"
+    # #print normal_frame
+    # # anomaly_frame = get_anomaly_frame(full_frame,"C35","g")
+    #
+    # #h2o.export_file(normal_frame, "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv")
+    # # h2o.export_file(anomaly_frame, "/home/wso2123/My Work/Datasets/Ionosphere/Ionosphere_anomaly.csv")
+    # # test_frame = np.random.choice(full_frame., int(len(full_frame)*0.7))
+    # # print test_frame
 
 
 def get_test_frame(frame, sample_ratio):

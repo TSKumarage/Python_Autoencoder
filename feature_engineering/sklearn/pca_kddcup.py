@@ -1,6 +1,6 @@
-# Load the Pima Indians diabetes dataset from CSV URL
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from sklearn import decomposition
 from sklearn_pandas import DataFrameMapper
 from sklearn import preprocessing
@@ -22,12 +22,12 @@ def main():
     global train_array
     global test_array
 
-    complete_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
-    train_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/uncorrected_train.csv"
-    validate_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/validate.csv"
-    test_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/test.csv"
+    complete_data = "/home/wso2123/My Work/Datasets/KDD Cup/train.csv"
+    train_data = "/home/wso2123/My Work/Datasets/KDD Cup/uncorrected_train.csv"
+    validate_data = "/home/wso2123/My Work/Datasets/KDD Cup/validate.csv"
+    test_data = "/home/wso2123/My Work/Datasets/KDD Cup/test.csv"
 
-    # load the CSV file as a numpy matrix
+    # load the CSV file as a pandas data frame
     complete_frame = pd.read_csv(complete_data)
     train_frame = pd.read_csv(train_data)
     validate_frame = pd.read_csv(validate_data)
@@ -35,17 +35,25 @@ def main():
 
     train_frame = pd.get_dummies(train_frame)
     feature_list = list(train_frame.columns)
-    mapper = DataFrameMapper([(feature_list[-2:], preprocessing.OneHotEncoder()), (feature_list[:-2], None)])
-    train_array = mapper.fit_transform(train_frame)
+    mapper = DataFrameMapper([(feature_list[-20:], preprocessing.OneHotEncoder()), (feature_list[:-20], preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0))])
+    d = mapper.fit_transform(train_frame)
 
     test_frame = pd.get_dummies(test_frame)
     feature_list = list(test_frame.columns)
-    mapper = DataFrameMapper([(feature_list[-2:], preprocessing.OneHotEncoder()), (feature_list[:-2], None)])
-    test_array = mapper.fit_transform(test_frame)
+    mapper = DataFrameMapper([(feature_list[-20:], preprocessing.OneHotEncoder()), (feature_list[:-20], preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0))])
+    d1 = mapper.fit_transform(test_frame)
 
-    for i in range(1):
+    print test_frame
+    print train_frame
+    recall = 1
+    index = 1
+    for i in tqdm(range(1, 40)):
         print i, "---------------"
-        model_build(12)
+        new_recal = model_build(12)
+        if new_recal > recall:
+            recall = new_recal
+            index = i
+        print "Max recall: ", recall, " at index: ", index
 
 
 def model_build(i):
@@ -55,9 +63,6 @@ def model_build(i):
     code = sp_pcs.transform(test_array)
     out_put = sp_pcs.inverse_transform(code)
 
-    print test_array[0]
-    print out_put[0]
-
     recons_err = []
     for i in range(len(test_array)):
         recons_err.append(metrics.mean_squared_error(test_array[i], out_put[i]))
@@ -66,8 +71,8 @@ def model_build(i):
     fp = 0
     tn = 0
     fn = 0
-    lbl_list = test_frame["diagnosis_B"]
-    quntile = 0.65
+    lbl_list = test_frame["C42_normal."]
+    quntile = 0.80
 
     threshold = get_percentile_threshold(quntile, recons_err)
     for i in range(len(recons_err)):
@@ -91,6 +96,8 @@ def model_build(i):
     print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
     print "Precision (TP / (TP + FP) :", 100 * float(tp) / (tp + fp)
     print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200 * float(tp) / (2 * tp + fp + fn)
+
+    return recall
 
 
 def get_percentile_threshold(quntile, data_frame):

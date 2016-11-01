@@ -31,7 +31,7 @@ def model_build():
     #
     anomaly_model = H2OAutoEncoderEstimator(
         activation="Tanh",
-        hidden=[9, 9, 9],
+        hidden=[12],
         sparse=True,
         l1=1e-4,
         epochs=100,

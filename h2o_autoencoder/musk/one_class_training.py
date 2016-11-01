@@ -27,20 +27,25 @@ def main():
     uncorrected_train_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_uncorrected_train.csv"
     test_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_test.csv"
 
+    validate_data = "/home/wso2123/My Work/Datasets/musk/musk_small/clean1_validate.csv"
+    train_data = "/home/wso2123/My Work/Datasets/musk/musk_small/clean1_train.csv"
+    uncorrected_train_data = "/home/wso2123/My Work/Datasets/musk/musk_small/clean1_uncorrected_train.csv"
+    test_data = "/home/wso2123/My Work/Datasets/musk/musk_small/clean1_test.csv"
+
     test_frame = h2o.import_file(test_data)
     train_frame = h2o.import_file(train_data)
     validate_frame = h2o.import_file(validate_data)
     max_i =0
 
-    for i in range(1):
-        new_recall = model_build()
+    for i in range(100, 150):
+        new_recall = model_build(i)
         if new_recall > recall:
             recall = new_recall
             max_i = i
     print recall, max_i
 
 
-def model_build():
+def model_build(i):
     #
     # Train deep autoencoder learning model on "normal"
     # training data, y ignored
@@ -48,11 +53,11 @@ def model_build():
     print train_frame.names[0:2]
 
     anomaly_model = H2OAutoEncoderEstimator(
-        activation="TanhWithDropout",
-        hidden=[166],
+        activation="Tanh",
+        hidden=[i],
         sparse=True,
         l1=1e-4,
-        epochs=100,
+        epochs=10,
         ignored_columns=train_frame.names[0:2]
     )
 
@@ -73,6 +78,8 @@ def model_build():
     err_list = map(float, error_str.split("\n")[1:-1])
     threshold = max_err
     print "The following test points are reconstructed with an error greater than: ", threshold
+    print "Train", train_frame.ncol
+    print "Test", test_frame.ncol
 
     tp = 0
     fp = 0
@@ -80,9 +87,10 @@ def model_build():
     fn = 0
 
     lbl_list = test_frame[test_frame.ncol-1]
-    print lbl_list[0, 1] ==0
+    print lbl_list[1, 0] == 0
+    print "done"
 
-    for i in range(len(recon_error) - 1):
+    for i in tqdm(range(len(recon_error) - 1)):
         if err_list[i] > threshold:
             if lbl_list[i, 0] == 0:
                 fp += 1
@@ -104,10 +112,12 @@ def model_build():
     print "FP :", fp, "/n"
     print "TN :", tn, "/n"
     print "FN :", fn, "/n"
-    print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
-    print "Precision (TP / (TP + FP) :", 100 * float(tp) / (tp + fp)
-    print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200 * float(
-        tp) / (2 * tp + fp + fn)
+
+    if tp+fp != 0:
+        print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
+        print "Precision (TP / (TP + FP) :", 100 * float(tp) / (tp + fp)
+        print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200 * float(
+            tp) / (2 * tp + fp + fn)
 
     return recall
 

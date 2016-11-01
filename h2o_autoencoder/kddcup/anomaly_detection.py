@@ -6,34 +6,46 @@ from tqdm import tqdm
 import h2o.model.metrics_base
 from h2o.estimators.deeplearning import H2OAutoEncoderEstimator
 
+global train_data
+global validate_data
+global test_data
 
 def main():
-    os.environ['NO_PROXY'] = 'localhost'
-    # Start H2O on your local machine
-    h2o.init()
-    model_build()
-
-
-def model_build():
+    global train_data
+    global validate_data
+    global test_data
 
     kddcup_data_set1 = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected"
     kddcup_data_set1_normal = "/home/wso2123/My Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv"
-    kddcup_data_train_dataset = "/home/wso2123/My Work/Datasets/KDD Cup/f_uncorrected_train.csv"
+    kddcup_data_train_dataset = "/home/wso2123/My Work/Datasets/KDD Cup/f_train.csv"
     kddcup_data_validate_dataset = "/home/wso2123/My Work/Datasets/KDD Cup/f_validate.csv"
     kddcup_data_test_dataset = "/home/wso2123/My Work/Datasets/KDD Cup/f_test.csv"
+
+    os.environ['NO_PROXY'] = 'localhost'
+    # Start H2O on your local machine
+    h2o.init()
 
     train_data = h2o.import_file(kddcup_data_train_dataset)
     validate_data = h2o.import_file(kddcup_data_validate_dataset)
     test_data = h2o.import_file(kddcup_data_test_dataset)
+    recall = 10
+    index = 1
+    for i in range(10):
+        new_recall = model_build(2)
+        if new_recall > recall:
+            recall = new_recall
+            index = i
+    print "Max recall: ",recall, " at index: ", i
 
 
+def model_build(i):
     #
     # Train deep autoencoder learning model on "normal"
     # training data, y ignored
     #
     anomaly_model = H2OAutoEncoderEstimator(
         activation="Tanh",
-        hidden=[25, 12, 25],
+        hidden=[i],
         sparse=True,
         l1=1e-4,
         epochs=10,
@@ -54,10 +66,10 @@ def model_build():
     error_str = recon_error.get_frame_data()
 
     err_list = map(float, error_str.split("\n")[1:-1])
-    quntile = 0.95
+    quntile = 0.80
 
-    threshold = max_err
-    threshold = get_percentile_threshold(quntile, err_list)
+    threshold = max_err*quntile
+    # threshold = get_percentile_threshold(quntile, err_list)
 
     # threshold = get_percentile_threshold(quntile, err_list)
     print "Quntile used: ", quntile
@@ -97,7 +109,7 @@ def model_build():
     print "Precision (TP / (TP + FP) :", 100*float(tp)/(tp+fp)
     print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200*float(tp)/(2*tp+fp+fn)
 
-    return recall, test_data
+    return recall
 
 
 def get_percentile_threshold(quntile, data_frame):
