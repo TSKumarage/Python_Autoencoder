@@ -5,9 +5,13 @@ from sklearn import metrics
 from keras.models import Model
 from sklearn import decomposition
 from sklearn import preprocessing
+from keras import regularizers
 from keras.layers import Input, Dense
 from keras.models import Sequential
 from sklearn_pandas import DataFrameMapper
+import tensorflow as tf
+tf.python.control_flow_ops = tf
+
 
 global complete_frame
 global train_frame
@@ -66,21 +70,21 @@ def main():
 def model_build(i):
     # create model
     model = Sequential()
-    model.add(Dense(12, input_dim=32, init='uniform', activation='relu'))
+    model.add(Dense(12, input_dim=32, init='uniform', activation='relu' , activity_regularizer=regularizers.activity_l1(10e-5)))
     model.add(Dense(32, init='uniform', activation='relu'))
     # Compile model
     model.compile(optimizer='adam', loss='mean_squared_error')
     # Fit the model
     model.fit(train_array, train_array, nb_epoch=150, batch_size=20, validation_data=(validation_array, validation_array))
     # evaluate the model
-    decoded_imgs  = model.predict(test_array)
+    decoded_output = model.predict(test_array)
 
-    print test_array[1]
-    print decoded_imgs[1]
+    print test_array[0]
+    print decoded_output[0]
 
     recons_err = []
     for i in range(len(test_array)):
-        recons_err.append(metrics.mean_squared_error(test_array[i], decoded_imgs[i]))
+        recons_err.append(metrics.mean_squared_error(test_array[i], decoded_output[i]))
 
     tp = 0
     fp = 0

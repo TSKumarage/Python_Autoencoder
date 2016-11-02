@@ -6,7 +6,8 @@ from keras.models import Model
 from sklearn import decomposition
 from keras import regularizers
 from sklearn import preprocessing
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, Convolution2D, MaxPooling2D, UpSampling2D
+from keras.models import Model
 from sklearn_pandas import DataFrameMapper
 import tensorflow as tf
 tf.python.control_flow_ops = tf
