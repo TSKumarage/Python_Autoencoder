@@ -4,12 +4,14 @@ import pandas as pd
 from sklearn import metrics
 from keras.models import Model
 from sklearn import decomposition
-from keras import regularizers
 from sklearn import preprocessing
+from keras import regularizers
 from keras.layers import Input, Dense
+from keras.models import Sequential
 from sklearn_pandas import DataFrameMapper
 import tensorflow as tf
 tf.python.control_flow_ops = tf
+
 
 global complete_frame
 global train_frame
@@ -29,10 +31,10 @@ def main():
     global test_array
     global validation_array
 
-    complete_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
-    train_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/uncorrected_train.csv"
-    validate_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/validate.csv"
-    test_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/test.csv"
+    complete_data = "/home/wso2123/My Work/Datasets/Ionosphere/ionosphere.csv"
+    train_data = "/home/wso2123/My Work/Datasets/Ionosphere/uncorrected_train.csv"
+    validate_data = "/home/wso2123/My Work/Datasets/Ionosphere/validate.csv"
+    test_data = "/home/wso2123/My Work/Datasets/Ionosphere/test.csv"
 
     # load the CSV file as a numpy matrix
     complete_frame = pd.read_csv(complete_data)
@@ -41,7 +43,7 @@ def main():
     test_frame = pd.read_csv(test_data)
 
     train_frame = pd.get_dummies(train_frame)
-    train_frame = train_frame.drop('diagnosis_M', axis=1)
+    train_frame = train_frame.drop('C35_b', axis=1)
     feature_list = list(train_frame.columns)
     print feature_list
     mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
@@ -49,7 +51,7 @@ def main():
     train_array = mapper.fit_transform(train_frame)
 
     test_frame = pd.get_dummies(test_frame)
-    test_frame = test_frame.drop('diagnosis_M', axis=1)
+    test_frame = test_frame.drop('C35_b', axis=1)
     feature_list = list(test_frame.columns)
     print feature_list
     mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
@@ -69,66 +71,40 @@ def main():
 
     max_recall = 0
     dep = 0
-    for i in range(1,30):
+    for i in range(1, 10):
         print i, "---------------"
-        new_recall = model_build(i)
-        if(new_recall > max_recall):
+        new_recall = model_build(15)
+        if new_recall > max_recall:
             dep = i
             max_recall = new_recall
         print dep, max_recall
 
+
 def model_build(i):
-    # this is the size of our encoded representations
-    encoding_dim = i # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
+    # create model
+    model = Sequential()
+    model.add(Dense(i, input_dim=35, init='uniform', activation='relu' , activity_regularizer=regularizers.activity_l1(10e-5)))
+    model.add(Dense(35, init='uniform', activation='relu'))
+    # Compile model
+    model.compile(optimizer='adam', loss='mean_squared_error')
+    # Fit the model
+    model.fit(train_array, train_array, nb_epoch=150, batch_size=20, validation_data=(validation_array, validation_array))
+    # evaluate the model
+    decoded_output = model.predict(test_array)
 
-    # this is our input placeholder
-    input_img = Input(shape=(32, ))
-    # "encoded" is the encoded representation of the input
-    encoded = Dense(encoding_dim, activation='relu', activity_regularizer=regularizers.activity_l1(10e-5))(input_img)
-    # "decoded" is the lossy reconstruction of the input
-    decoded = Dense(32, activation='sigmoid')(encoded)
-
-    # this model maps an input to its reconstruction
-    autoencoder = Model(input=input_img, output=decoded)
-
-    # this model maps an input to its encoded representation
-    encoder = Model(input=input_img, output=encoded)
-
-    # create a placeholder for an encoded (32-dimensional) input
-    encoded_input = Input(shape=(encoding_dim,))
-    # retrieve the last layer of the autoencoder model
-    decoder_layer = autoencoder.layers[-1]
-    # create the decoder model
-    decoder = Model(input=encoded_input, output=decoder_layer(encoded_input))
-
-    # autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
-    autoencoder.compile(optimizer='adam', loss='mean_squared_error')
-
-
-    hist = autoencoder.fit(train_array, train_array,
-                    nb_epoch=10,
-                    batch_size=10,
-                    shuffle=True,
-                    validation_data=(train_array, train_array))
-
-    # encode and decode some digits
-    # note that we take them from the *test* set
-    encoded_imgs = encoder.predict(test_array)
-    decoded_imgs = decoder.predict(encoded_imgs)
-
-    # for i in range(len(test_array[0])):
-    #     print test_array[0][i], " ==> ", decoded_imgs[0][i]
+    print test_array[0]
+    print decoded_output[0]
 
     recons_err = []
     for i in range(len(test_array)):
-        recons_err.append(metrics.mean_squared_error(test_array[i], decoded_imgs[i]))
+        recons_err.append(metrics.mean_squared_error(test_array[i], decoded_output[i]))
 
     tp = 0
     fp = 0
     tn = 0
     fn = 0
-    lbl_list = test_frame["diagnosis_B"]
-    quntile = 0.95
+    lbl_list = test_frame["C35_g"]
+    quntile = 0.80
 
     threshold = get_percentile_threshold(quntile, recons_err)
     for i in range(len(recons_err)):
@@ -154,7 +130,6 @@ def model_build(i):
     print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200 * float(tp) / (2 * tp + fp + fn)
 
     return recall
-
 
 def get_percentile_threshold(quntile, data_frame):
     var = np.array(data_frame)  # input array
