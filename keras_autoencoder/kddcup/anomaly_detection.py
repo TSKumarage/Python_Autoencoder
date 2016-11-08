@@ -104,7 +104,7 @@ def model_build(i):
     # create the decoder model
     decoder = Model(input=encoded_input, output=decoder_layer(encoded_input))
 
-    autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+    autoencoder.compile(optimizer='adadelta', loss='mean_squared_error')
     # autoencoder.compile(optimizer='adam', loss='mean_squared_error')
 
 

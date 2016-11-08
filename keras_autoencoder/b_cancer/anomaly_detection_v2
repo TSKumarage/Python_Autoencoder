@@ -1,12 +1,14 @@
 # Load the Pima Indians diabetes dataset from CSV URL
 import numpy as np
 import pandas as pd
+from keras.optimizers import Adam, SGD
 from sklearn import metrics
 from keras.models import Model
 from sklearn import decomposition
+from keras.constraints import maxnorm
 from sklearn import preprocessing
 from keras import regularizers
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, Dropout
 from keras.models import Sequential
 from sklearn_pandas import DataFrameMapper
 import tensorflow as tf
@@ -64,18 +66,20 @@ def main():
 
     for i in range(1):
         print i, "---------------"
-        model_build(13)
+        model_build(20)
 
 
 def model_build(i):
     # create model
     model = Sequential()
-    model.add(Dense(i, input_dim=32, init='uniform', activation='relu' , activity_regularizer=regularizers.activity_l1(10e-5)))
+    model.add(Dense(i, input_dim=32, init='uniform', activation='relu' , activity_regularizer=regularizers.activity_l1(10e-5),  W_constraint=maxnorm(1)))
+    model.add(Dropout(0.1))
     model.add(Dense(32, init='uniform', activation='relu'))
     # Compile model
-    model.compile(optimizer='adam', loss='mean_squared_error')
+    optimizer = SGD(lr=0.001, momentum=0.0)
+    model.compile(optimizer=optimizer, loss='mean_squared_error')
     # Fit the model
-    model.fit(train_array, train_array, nb_epoch=150, batch_size=20, validation_data=(validation_array, validation_array))
+    model.fit(train_array, train_array, nb_epoch=100, batch_size=10, validation_data=(validation_array, validation_array))
     # evaluate the model
     decoded_output = model.predict(test_array)
 
@@ -91,7 +95,7 @@ def model_build(i):
     tn = 0
     fn = 0
     lbl_list = test_frame["diagnosis_B"]
-    quntile = 0.95
+    quntile = 0.65
 
     threshold = get_percentile_threshold(quntile, recons_err)
     for i in range(len(recons_err)):

@@ -1,15 +1,14 @@
 # Load the Pima Indians diabetes dataset from CSV URL
 import numpy as np
 import pandas as pd
+from keras.optimizers import *
 from keras.wrappers.scikit_learn import KerasClassifier
-from sklearn import metrics
-from keras.models import Model
-from sklearn import decomposition
 from keras import regularizers
 from sklearn import preprocessing
 from sklearn.model_selection import GridSearchCV
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, Dropout
 from keras.models import Sequential
+from keras.constraints import maxnorm
 from sklearn_pandas import DataFrameMapper
 import tensorflow as tf
 tf.python.control_flow_ops = tf
@@ -21,6 +20,8 @@ global test_frame
 global train_array
 global test_array
 global validation_array
+input_dim = 32
+inter_dim = 13
 
 
 def main():
@@ -31,6 +32,10 @@ def main():
     global train_array
     global test_array
     global validation_array
+    global input_dim
+    global inter_dim
+
+
 
     complete_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
     train_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/uncorrected_train.csv"
@@ -67,37 +72,79 @@ def main():
                                               preprocessing.Normalizer()])])
     validation_array = mapper.fit_transform(validate_frame)
 
-    # # Tune Batch Size and Number of Epochs
+    # batch_size_tune()
+    # learning_rate_tune(100,10)
+    # optimizer_tune(100,10)
+    # activation_tune(100, 10)
+    # init_mode_tune(100,10)
+    # dropout_tune(100,10)
+    hidden_depth_tune(100,10)
 
-    # model = KerasClassifier(build_fn=model_build, verbose=0)
-    # # define the grid search parameters
-    # batch_size = [10, 20, 40, 60, 80, 100]
-    # epochs = [10, 50, 100]
-    # param_grid = dict(batch_size=batch_size, nb_epoch=epochs)
-    # grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
-    # grid_result = grid.fit(train_array, train_array)
-    # # summarize results
 
-    #Tune the Training Optimization Algorithm
+def batch_size_tune():
+    global train_array
+    # Tune Batch Size and Number of Epochs
 
-    # model = KerasClassifier(build_fn=model_build, nb_epoch=100, batch_size=10, verbose=0)
-    # # define the grid search parameters
-    # optimizer = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
-    # param_grid = dict(optimizer=optimizer)
-    # grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
-    # grid_result = grid.fit(train_array, train_array)
-    # create model
-
-    # Tune the Training activation function
-    model = KerasClassifier(build_fn=model_build, nb_epoch=100, batch_size=10, verbose=0)
+    model = KerasClassifier(build_fn=create_model, verbose=0)
     # define the grid search parameters
-    activation = ['softmax', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
-    param_grid = dict(activation=activation)
+    batch_size = [10, 20, 40, 60, 80, 100]
+    epochs = [10, 50, 100]
+    param_grid = dict(batch_size=batch_size, nb_epoch=epochs)
     grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
     grid_result = grid.fit(train_array, train_array)
 
-    # create model
-    model = KerasClassifier(build_fn=create_model, nb_epoch=100, batch_size=10, verbose=0)
+    # summarize results
+    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+    means = grid_result.cv_results_['mean_test_score']
+    stds = grid_result.cv_results_['std_test_score']
+    params = grid_result.cv_results_['params']
+    for mean, stdev, param in zip(means, stds, params):
+        print("%f (%f) with: %r" % (mean, stdev, param))
+
+
+def learning_rate_tune(nb_epoch, batch_size):
+    # Tune Learning Rate and Momentum
+
+    model = KerasClassifier(build_fn=create_model, nb_epoch=nb_epoch, batch_size=batch_size, verbose=0)
+    # define the grid search parameters
+    learn_rate = [0.001, 0.01, 0.1, 0.2, 0.3]
+    momentum = [0.0, 0.2, 0.4, 0.6, 0.8, 0.9]
+    param_grid = dict(learn_rate=learn_rate, momentum=momentum)
+    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+    grid_result = grid.fit(train_array, train_array)
+
+    # summarize results
+    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+    means = grid_result.cv_results_['mean_test_score']
+    stds = grid_result.cv_results_['std_test_score']
+    params = grid_result.cv_results_['params']
+    for mean, stdev, param in zip(means, stds, params):
+        print("%f (%f) with: %r" % (mean, stdev, param))
+
+
+def optimizer_tune(nb_epoch, batch_size):
+    # Tune the Training Optimization Algorithm
+
+    model = KerasClassifier(build_fn=op_create_model, nb_epoch=nb_epoch, batch_size=batch_size, verbose=0)
+    # define the grid search parameters
+    optimizer = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+    param_grid = dict(optimizer=optimizer)
+    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+    grid_result = grid.fit(train_array, train_array)
+
+    # summarize results
+    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+    means = grid_result.cv_results_['mean_test_score']
+    stds = grid_result.cv_results_['std_test_score']
+    params = grid_result.cv_results_['params']
+    for mean, stdev, param in zip(means, stds, params):
+        print("%f (%f) with: %r" % (mean, stdev, param))
+
+
+def init_mode_tune(nb_epoch, batch_size):
+    # Tune the Network Weight Initialization
+
+    model = KerasClassifier(build_fn=create_model, nb_epoch=nb_epoch, batch_size=batch_size, verbose=0)
     # define the grid search parameters
     init_mode = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal',
                  'he_uniform']
@@ -105,67 +152,114 @@ def main():
     grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
     grid_result = grid.fit(train_array, train_array)
 
-    model = KerasClassifier(build_fn=create_model, nb_epoch=100, batch_size=10, verbose=0)
+    # summarize results
+    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+    means = grid_result.cv_results_['mean_test_score']
+    stds = grid_result.cv_results_['std_test_score']
+    params = grid_result.cv_results_['params']
+    for mean, stdev, param in zip(means, stds, params):
+        print("%f (%f) with: %r" % (mean, stdev, param))
+
+
+def activation_tune(nb_epoch, batch_size):
+    # Tune the Training activation function
+
+    model = KerasClassifier(build_fn=create_model, nb_epoch=nb_epoch, batch_size=batch_size, verbose=0)
+    # define the grid search parameters
+    activation = ['softmax', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
+    param_grid = dict(activation=activation)
+    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+    grid_result = grid.fit(train_array, train_array)
+
+    # summarize results
+    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+    means = grid_result.cv_results_['mean_test_score']
+    stds = grid_result.cv_results_['std_test_score']
+    params = grid_result.cv_results_['params']
+    for mean, stdev, param in zip(means, stds, params):
+        print("%f (%f) with: %r" % (mean, stdev, param))
+
+
+def dropout_tune(nb_epoch, batch_size):
+    # Tune Dropout Regularization
+
+    model = KerasClassifier(build_fn=create_model, nb_epoch=nb_epoch, batch_size=batch_size, verbose=0)
+    # define the grid search parameters
+    weight_constraint = [1, 2, 3, 4, 5]
+    dropout_rate = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    param_grid = dict(dropout_rate=dropout_rate, weight_constraint=weight_constraint)
+    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+    grid_result = grid.fit(train_array, train_array)
+    # summarize results
+    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+    means = grid_result.cv_results_['mean_test_score']
+    stds = grid_result.cv_results_['std_test_score']
+    params = grid_result.cv_results_['params']
+    for mean, stdev, param in zip(means, stds, params):
+        print("%f (%f) with: %r" % (mean, stdev, param))
+
+
+def hidden_depth_tune(nb_epoch, batch_size):
+    # Tune the Number of Neurons in the Hidden Layer
+
+    model = KerasClassifier(build_fn=create_model, nb_epoch=nb_epoch, batch_size=batch_size, verbose=0)
     # define the grid search parameters
     neurons = [1, 5, 10, 15, 20, 25, 30]
     param_grid = dict(neurons=neurons)
     grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
     grid_result = grid.fit(train_array, train_array)
 
+    # summarize results
     print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
-    for params, mean_score, scores in grid_result.grid_scores_:
-        print("%f (%f) with: %r" % (scores.mean(), scores.std(), params))
+    means = grid_result.cv_results_['mean_test_score']
+    stds = grid_result.cv_results_['std_test_score']
+    params = grid_result.cv_results_['params']
+    for mean, stdev, param in zip(means, stds, params):
+        print("%f (%f) with: %r" % (mean, stdev, param))
 
 
-def batchsizetune_create_model():
+def create_model(optimizer='adam', activation='relu', learn_rate=0.01, momentum=0, init_mode='uniform', dropout_rate=0.0, weight_constraint=0, neurons=inter_dim):
+
     # create model
     model = Sequential()
-    model.add(Dense(12, input_dim=32, activation='relu'))
-    model.add(Dense(1, activation='sigmoid'))
+    model.add(Dense(neurons, input_dim=input_dim, init=init_mode, activation=activation, activity_regularizer=regularizers.activity_l1(10e-5),
+                    W_constraint=maxnorm(weight_constraint)) )
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(input_dim, init=init_mode, activation=activation))
+
+    if optimizer == "SGD":
+        optimizer = SGD(lr=learn_rate, momentum=momentum)
+    elif optimizer == "Adam":
+        optimizer = Adam(lr=learn_rate, momentum=momentum)
+    elif optimizer == "RMSprop":
+        optimizer = RMSprop(lr=learn_rate, momentum=momentum)
+    elif optimizer == "Adagrad":
+        optimizer = Adagrad(lr=learn_rate, momentum=momentum)
+    elif optimizer == "Adadelta":
+        optimizer = Adadelta(lr=learn_rate, momentum=momentum)
+    elif optimizer == "Adamax":
+        optimizer = Adamax(lr=learn_rate, momentum=momentum)
+    elif optimizer == "Nadam":
+        optimizer = Nadam(lr=learn_rate, momentum=momentum)
+
     # Compile model
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss='mean_squared_error', optimizer= optimizer, metrics=['accuracy'])
+
     return model
 
 
-def create_model(optimizer='adam'):
+def op_create_model(optimizer='adam', activation='relu', learn_rate=0.01, momentum=0, init_mode='uniform', dropout_rate=0.0, weight_constraint=0, neurons=inter_dim):
+
     # create model
     model = Sequential()
-    model.add(Dense(12, input_dim=32, activation='relu'))
-    model.add(Dense(1, activation='sigmoid'))
+    model.add(Dense(neurons, input_dim=input_dim, init=init_mode, activation=activation, activity_regularizer=regularizers.activity_l1(10e-5),
+                    W_constraint=maxnorm(weight_constraint)) )
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(input_dim, init=init_mode, activation=activation))
+
     # Compile model
-    model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-    return model
+    model.compile(loss='mean_squared_error', optimizer= optimizer, metrics=['accuracy'])
 
-
-def create_model(init_mode='uniform'):
-    # create model
-    model = Sequential()
-    model.add(Dense(12, input_dim=32, init=init_mode, activation='relu'))
-    model.add(Dense(32, init=init_mode, activation='sigmoid'))
-    # Compile model
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    return model
-
-
-def model_build(activation='relu'):
-    # create model
-    model = Sequential()
-    model.add(Dense(12, input_dim=32, init='uniform', activation=activation,
-                    activity_regularizer=regularizers.activity_l1(10e-5)))
-    model.add(Dense(32, init='uniform', activation='relu'))
-    # Compile model
-    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
-    return model
-
-
-def create_model(neurons=1):
-    # create model
-    model = Sequential()
-    model.add(Dense(neurons, input_dim=32, init='uniform', activation='linear', W_constraint=maxnorm(4)))
-    model.add(Dropout(0.2))
-    model.add(Dense(1, init='uniform', activation='sigmoid'))
-    # Compile model
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
 
 if __name__ == '__main__':
