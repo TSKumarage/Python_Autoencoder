@@ -3,6 +3,7 @@ import os
 import h2o.frame
 import h2o.model.metrics_base
 import numpy as np
+from sklearn import metrics
 from h2o.estimators.deeplearning import H2OAutoEncoderEstimator
 
 
@@ -70,46 +71,51 @@ def main():
     print "anomaly model train mse: ", anomaly_model.mse()
     # Compute reconstruction, error with the Anomaly
     # detection app (MSE between output and input layers)
+    recon_error = anomaly_model.anomaly(test_data, True)
+    print sum(recon_error[0, 0:])/31
+    print recon_error.ncol, recon_error.nrow
+
     recon_error = anomaly_model.anomaly(test_data, False)
-    error_str = recon_error.get_frame_data()
-
-    err_list=map(float, error_str.split("\n")[1:-1])
-    #quntile=0.95
+    print recon_error[0,0]
+    # error_str = recon_error.get_frame_data()
     #
-    threshold = max_err
-        # get_percentile_threshold(quntile,err_list)
-
-    # print "Quntile used: ", quntile
-    print "The following test points are reconstructed with an error greater than: ", threshold
-
-    tp = 0
-    fp = 0
-    tn = 0
-    fn = 0
-    cnt = 0
-
-    lbl_list = test_data["diagnosis"]
-
-    for i in range(len(recon_error) - 1):
-        if err_list[i] > threshold:
-            if lbl_list[i, 0] == "B":
-                fp += 1
-            else:
-                tp += 1
-        else:
-            if lbl_list[i, 0] == "B":
-                tn += 1
-            else:
-                fn += 1
-
-    print "max: ", max(err_list)
-    print "TP :", tp, "/n"
-    print "FP :", fp, "/n"
-    print "TN :", tn, "/n"
-    print "FN :", fn, "/n"
-    print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", 100*float(tp)/(tp+fn)
-    print "Precision (TP / (TP + FP) :", 100*float(tp)/(tp+fp)
-    print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200*float(tp)/(2*tp+fp+fn)
+    # err_list=map(float, error_str.split("\n")[1:-1])
+    # #quntile=0.95
+    # #
+    # threshold = max_err
+    #     # get_percentile_threshold(quntile,err_list)
+    #
+    # # print "Quntile used: ", quntile
+    # print "The following test points are reconstructed with an error greater than: ", threshold
+    #
+    # tp = 0
+    # fp = 0
+    # tn = 0
+    # fn = 0
+    # cnt = 0
+    #
+    # lbl_list = test_data["diagnosis"]
+    #
+    # for i in range(len(recon_error) - 1):
+    #     if err_list[i] > threshold:
+    #         if lbl_list[i, 0] == "B":
+    #             fp += 1
+    #         else:
+    #             tp += 1
+    #     else:
+    #         if lbl_list[i, 0] == "B":
+    #             tn += 1
+    #         else:
+    #             fn += 1
+    #
+    # print "max: ", max(err_list)
+    # print "TP :", tp, "/n"
+    # print "FP :", fp, "/n"
+    # print "TN :", tn, "/n"
+    # print "FN :", fn, "/n"
+    # print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", 100*float(tp)/(tp+fn)
+    # print "Precision (TP / (TP + FP) :", 100*float(tp)/(tp+fp)
+    # print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200*float(tp)/(2*tp+fp+fn)
 
 
     # Note: Testing = Reconstructing the test dataset

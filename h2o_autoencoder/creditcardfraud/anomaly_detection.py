@@ -17,27 +17,27 @@ def main():
 
     kddcup_data_set1 = "/home/wso2123/My  Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected"
     kddcup_data_set1_normal = "/home/wso2123/My  Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv"
-    kddcup_data_train_dataset = "/home/wso2123/My  Work/Datasets/KDD Cup/f_train.csv"
-    kddcup_data_validate_dataset = "/home/wso2123/My  Work/Datasets/KDD Cup/f_validate.csv"
-    kddcup_data_test_dataset = "/home/wso2123/My  Work/Datasets/KDD Cup/f_test.csv"
+    train_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/train.csv"
+    validate_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/validate.csv"
+    test_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/test.csv"
     one_class = "/home/wso2123/My  Work/Datasets/KDD Cup/f_uncorrected_train.csv"
 
     os.environ['NO_PROXY'] = 'localhost'
     # Start H2O on your local machine
     h2o.init()
 
-    train_data = h2o.import_file(kddcup_data_train_dataset)
-    validate_data = h2o.import_file(kddcup_data_validate_dataset)
-    test_data = h2o.import_file(kddcup_data_test_dataset)
-    one = h2o.import_file(one_class)
+    train_data = h2o.import_file(train_dataset)
+    validate_data = h2o.import_file(validate_dataset)
+    test_data = h2o.import_file(test_dataset)
+
     recall = 10
     index = 1
-    # for i in range(10):
-    #     new_recall = model_build(2)
-    #     if new_recall > recall:
-    #         recall = new_recall
-    #         index = i
-    print len(one), len(train_data), len(validate_data), len(test_data)
+    for i in range(1):
+        new_recall = model_build(12)
+        if new_recall > recall:
+            recall = new_recall
+            index = i
+
 
 
 def model_build(i):
@@ -68,10 +68,10 @@ def model_build(i):
     error_str = recon_error.get_frame_data()
 
     err_list = map(float, error_str.split("\n")[1:-1])
-    quntile = 0.80
+    quntile = 0.99
 
     threshold = max_err*quntile
-    # threshold = get_percentile_threshold(quntile, err_list)
+    threshold = get_percentile_threshold(quntile, err_list)
 
     # threshold = get_percentile_threshold(quntile, err_list)
     print "Quntile used: ", quntile
@@ -85,19 +85,19 @@ def model_build(i):
     data_str = test_data.get_frame_data()
     lbl_list = data_str.split("\n")
 
+
     for i in tqdm(range(len(recon_error) - 1)):
         if err_list[i] > threshold:
-            if lbl_list[i+1].split(",")[-1] == "\"normal.\"":
+            if lbl_list[i+1].split(",")[-1] == "0":
                 fp += 1
             else:
                 tp += 1
         else:
-            if lbl_list[i+1].split(",")[-1] == "\"normal.\"":
+            if lbl_list[i+1].split(",")[-1] == "0":
                 tn += 1
             else:
                 fn += 1
-
-    recall = 100*float(tp)/(tp+fn)
+    recall =0
 
     print "Training dataset size: ", train_data.nrow
     print "Validation dataset size: ", validate_data.nrow
@@ -107,9 +107,13 @@ def model_build(i):
     print "FP :", fp, "/n"
     print "TN :", tn, "/n"
     print "FN :", fn, "/n"
-    print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
-    print "Precision (TP / (TP + FP) :", 100*float(tp)/(tp+fp)
-    print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200*float(tp)/(2*tp+fp+fn)
+
+    if tp+fp != 0:
+
+        recall = 100*float(tp)/(tp+fn)
+        print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
+        print "Precision (TP / (TP + FP) :", 100*float(tp)/(tp+fp)
+        print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200*float(tp)/(2*tp+fp+fn)
 
     return recall
 
