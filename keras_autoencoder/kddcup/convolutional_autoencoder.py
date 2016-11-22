@@ -78,6 +78,7 @@ def main():
     print "Training set (n_col, n_rows)", train_array.shape
     print "Testing set (n_col, n_rows)", test_array.shape
     print "Validation set (n_col, n_rows)", validation_array.shape
+    print train_array[0]
 
     li = [25, 40, 55, 75, 80]
     for i in range(1):
@@ -86,42 +87,6 @@ def main():
 
 
 def model_build(i):
-    # # this is the size of our encoded representations
-    # encoding_dim = i # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
-    #
-    # # this is our input placeholder
-    # input_img = Input(shape=(118, ))
-    # # "encoded" is the encoded representation of the input
-    # encoded = Dense(encoding_dim, activation='relu', activity_regularizer=regularizers.activity_l1(10e-5))(input_img)
-    # # "decoded" is the lossy reconstruction of the input
-    # decoded = Dense(118, activation='relu')(encoded)
-    #
-    # # this model maps an input to its reconstruction
-    # autoencoder = Model(input=input_img, output=decoded)
-    #
-    # # this model maps an input to its encoded representation
-    # encoder = Model(input=input_img, output=encoded)
-    #
-    # # create a placeholder for an encoded (32-dimensional) input
-    # encoded_input = Input(shape=(encoding_dim,))
-    # # retrieve the last layer of the autoencoder model
-    # decoder_layer = autoencoder.layers[-1]
-    # # create the decoder model
-    # decoder = Model(input=encoded_input, output=decoder_layer(encoded_input))
-    #
-    # autoencoder.compile(optimizer='adadelta', loss='mean_squared_error')
-    # # autoencoder.compile(optimizer='adam', loss='mean_squared_error')
-    #
-    #
-    # hist = autoencoder.fit(train_array, train_array,
-    #                 nb_epoch=10,
-    #                 batch_size=1000,
-    #                 shuffle=True,
-    #                 validation_data=(train_array, train_array))
-    #
-    # # encode and decode some digits
-    # note that we take them from the *test* set
-    input_img = Input(shape=(118,))
 
     # autoencoder = Sequential()
     # autoencoder.add(Convolution1D(64, 3, activation='relu', border_mode='same', input_dim=118))
@@ -144,22 +109,22 @@ def model_build(i):
 
     input_img = Input(shape=(1, 118))
 
-    x = Convolution1D(16, 3, activation='relu', border_mode='same')(input_img)
-    x = MaxPooling1D(2, border_mode='same')(x)
-    x = Convolution1D(8, 3, activation='relu', border_mode='same')(x)
-    x = MaxPooling1D(2, border_mode='same')(x)
-    x = Convolution1D(8, 3, activation='relu', border_mode='same')(x)
+    x = Convolution1D(32, 200, activation='relu', border_mode='same')(input_img)
+    # x = MaxPooling1D(2, border_mode='same')(x)
+    # x = Convolution1D(8, 3, activation='relu', border_mode='same')(x)
+    # x = MaxPooling1D(2, border_mode='same')(x)
+    # x = Convolution1D(8, 3, activation='relu', border_mode='same')(x)
     encoded = MaxPooling1D(2, border_mode='same')(x)
 
     # at this point the representation is (8, 4, 4) i.e. 128-dimensional
 
-    x = Convolution1D(8, 3, activation='relu', border_mode='same')(encoded)
-    x = UpSampling1D(2)(x)
-    x = Convolution1D(8, 3, activation='relu', border_mode='same')(x)
-    x = UpSampling1D(2)(x)
-    x = Convolution1D(16, 3, activation='relu')(x)
-    x = UpSampling1D(2)(x)
-    decoded = Convolution1D(118, 3, activation='sigmoid', border_mode='same')(x)
+    x = Convolution1D(32, 16, activation='relu', border_mode='same')(encoded)
+    # x = UpSampling1D(1)(x)
+    # x = Convolution1D(8, 3, activation='relu', border_mode='same')(x)
+    # x = UpSampling1D(1)(x)
+    # x = Convolution1D(16, 3, activation='relu')(x)
+    # x = UpSampling1D(1)(x)
+    decoded = Convolution1D(118, 35, activation='sigmoid', border_mode='same')(x)
 
     autoencoder = Model(input_img, decoded)
     autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
@@ -167,44 +132,49 @@ def model_build(i):
     decoded_imgs = autoencoder.predict(test_array)
 
     print decoded_imgs.shape
+    decoded_imgs = np.reshape(decoded_imgs, (len(decoded_imgs), 1, 118))
+    print decoded_imgs.shape
 
-    # for i in range(len(test_array[0])):
-    #     print test_array[0][i], " ==> ", decoded_imgs[0][i]
+    print test_array[0][0]
+    print decoded_imgs[0][0]
+
+    # for i in range(1000):
+    #     print test_array[0][0][i], " ==> ", decoded_imgs[0][0][i]
     #
-    # recons_err = []
-    # for i in range(len(test_array)):
-    #     recons_err.append(metrics.mean_squared_error(test_array[i], decoded_imgs[i]))
-    #
-    # tp = 0
-    # fp = 0
-    # tn = 0
-    # fn = 0
-    # lbl_list = test_frame["C42_normal."]
-    # quntile = 0.95
-    #
-    # threshold = get_percentile_threshold(quntile, recons_err)
-    #
-    # for i in range(len(recons_err)):
-    #     if recons_err[i] > threshold:
-    #         if lbl_list[i] == 1:
-    #             fp += 1
-    #         else:
-    #             tp += 1
-    #     else:
-    #         if lbl_list[i] == 1:
-    #             tn += 1
-    #         else:
-    #             fn += 1
-    #
-    # recall = 100 * float(tp) / (tp + fn)
-    # print "Threshold :", threshold
-    # print "TP :", tp, "/n"
-    # print "FP :", fp, "/n"
-    # print "TN :", tn, "/n"
-    # print "FN :", fn, "/n"
-    # print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
-    # print "Precision (TP / (TP + FP) :", 100 * float(tp) / (tp + fp)
-    # print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200 * float(tp) / (2 * tp + fp + fn)
+    recons_err = []
+    for i in range(len(test_array)):
+        recons_err.append(metrics.mean_squared_error(test_array[i][0], decoded_imgs[i][0]))
+
+    tp = 0
+    fp = 0
+    tn = 0
+    fn = 0
+    lbl_list = test_frame["C42_normal."]
+    quntile = 0.95
+
+    threshold = get_percentile_threshold(quntile, recons_err)
+
+    for i in range(len(recons_err)):
+        if recons_err[i] > threshold:
+            if lbl_list[i] == 1:
+                fp += 1
+            else:
+                tp += 1
+        else:
+            if lbl_list[i] == 1:
+                tn += 1
+            else:
+                fn += 1
+
+    recall = 100 * float(tp) / (tp + fn)
+    print "Threshold :", threshold
+    print "TP :", tp, "/n"
+    print "FP :", fp, "/n"
+    print "TN :", tn, "/n"
+    print "FN :", fn, "/n"
+    print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
+    print "Precision (TP / (TP + FP) :", 100 * float(tp) / (tp + fp)
+    print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200 * float(tp) / (2 * tp + fp + fn)
 
 
 def get_percentile_threshold(quntile, data_frame):

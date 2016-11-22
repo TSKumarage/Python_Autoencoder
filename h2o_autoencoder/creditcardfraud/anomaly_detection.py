@@ -17,7 +17,7 @@ def main():
 
     kddcup_data_set1 = "/home/wso2123/My  Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected"
     kddcup_data_set1_normal = "/home/wso2123/My  Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv"
-    train_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/train.csv"
+    train_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/uncorrected_train.csv"
     validate_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/validate.csv"
     test_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/test.csv"
     one_class = "/home/wso2123/My  Work/Datasets/KDD Cup/f_uncorrected_train.csv"
@@ -47,10 +47,11 @@ def model_build(i):
     #
     anomaly_model = H2OAutoEncoderEstimator(
         activation="Tanh",
-        hidden=[i],
+        hidden=[12],
         sparse=True,
         l1=1e-4,
         epochs=10,
+        ignored_columns=train_data.names[0]
     )
 
     anomaly_model.train(x=train_data.names, training_frame=train_data, validation_frame=validate_data)
@@ -68,7 +69,7 @@ def model_build(i):
     error_str = recon_error.get_frame_data()
 
     err_list = map(float, error_str.split("\n")[1:-1])
-    quntile = 0.99
+    quntile = 0.998338
 
     threshold = max_err*quntile
     threshold = get_percentile_threshold(quntile, err_list)
