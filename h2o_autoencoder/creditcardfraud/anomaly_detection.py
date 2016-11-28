@@ -9,18 +9,20 @@ from h2o.estimators.deeplearning import H2OAutoEncoderEstimator
 global train_data
 global validate_data
 global test_data
+global one_class_train
 
 def main():
     global train_data
     global validate_data
     global test_data
+    global one_class_train
 
     kddcup_data_set1 = "/home/wso2123/My  Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected"
     kddcup_data_set1_normal = "/home/wso2123/My  Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected_normal.csv"
     train_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/uncorrected_train.csv"
     validate_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/validate.csv"
     test_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/test.csv"
-    one_class = "/home/wso2123/My  Work/Datasets/KDD Cup/f_uncorrected_train.csv"
+    one_class_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/train.csv"
 
     os.environ['NO_PROXY'] = 'localhost'
     # Start H2O on your local machine
@@ -29,6 +31,7 @@ def main():
     train_data = h2o.import_file(train_dataset)
     validate_data = h2o.import_file(validate_dataset)
     test_data = h2o.import_file(test_dataset)
+    one_class_train = h2o.import_file(one_class_dataset)
 
     recall = 10
     index = 1
@@ -111,9 +114,9 @@ def model_build(i):
 
     if tp+fp != 0:
 
-        recall = 100*float(tp)/(tp+fn)
+        recall = (100*float(tp))/(tp+fn)
         print "Recall (sensitivity) true positive rate (TP / (TP + FN)) :", recall
-        print "Precision (TP / (TP + FP) :", 100*float(tp)/(tp+fp)
+        print "Precision (TP / (TP + FP) :", (100*float(tp))/(tp+fp)
         print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200*float(tp)/(2*tp+fp+fn)
 
     return recall

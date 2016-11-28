@@ -9,7 +9,7 @@ from sklearn import metrics
 global complete_frame
 global train_frame
 global validate_frame
-global test_frame
+global test_array
 global train_array
 global test_array
 
@@ -18,7 +18,7 @@ def main():
     global complete_frame
     global train_frame
     global validate_frame
-    global test_frame
+    global test_array
     global train_array
     global test_array
 
@@ -63,7 +63,7 @@ def model_build(i):
     fp = 0
     tn = 0
     fn = 0
-    lbl_list = test_frame["C35_g"]
+    lbl_list = test_array["C35_g"]
     quntile = 0.80
 
     threshold = get_percentile_threshold(quntile, recons_err)

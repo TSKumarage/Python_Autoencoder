@@ -16,7 +16,7 @@ tf.python.control_flow_ops = tf
 global complete_frame
 global train_frame
 global validate_frame
-global test_frame
+global test_array
 global train_array
 global test_array
 global validation_array
@@ -28,7 +28,7 @@ def main():
     global complete_frame
     global train_frame
     global validate_frame
-    global test_frame
+    global test_array
     global train_array
     global test_array
     global validation_array

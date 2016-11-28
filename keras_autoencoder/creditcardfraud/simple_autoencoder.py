@@ -14,7 +14,7 @@ tf.python.control_flow_ops = tf
 global complete_frame
 global train_frame
 global validate_frame
-global test_frame
+global test_array
 global train_array
 global test_array
 global validation_array
@@ -24,13 +24,13 @@ def main():
     global complete_frame
     global train_frame
     global validate_frame
-    global test_frame
+    global test_array
     global train_array
     global test_array
     global validation_array
 
     # complete_data = "/home/wso2123/My  Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected"
-    train_data = "/home/wso2123/My  Work/Datasets/Creditcard/uncorrected_train.csv"
+    train_data = "/home/wso2123/My  Work/Datasets/Creditcard/train.csv"
     validate_data = "/home/wso2123/My  Work/Datasets/Creditcard/validate.csv"
     test_data = "/home/wso2123/My  Work/Datasets/Creditcard/test.csv"
 
@@ -41,7 +41,7 @@ def main():
     test_frame = pd.read_csv(test_data)
 
     train_frame = pd.get_dummies(train_frame)
-    # train_frame = train_frame.drop(lbl_list_train, axis=1)
+    train_frame = train_frame.drop(['Time'], axis=1)
     feature_list = list(train_frame.columns)
     print feature_list, len(feature_list)
     mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
@@ -49,7 +49,7 @@ def main():
     train_array = mapper.fit_transform(train_frame)
 
     test_frame = pd.get_dummies(test_frame)
-    # test_frame = test_frame.drop(lbl_list_test, axis=1)
+    test_frame = test_frame.drop(['Time'], axis=1)
     feature_list = list(test_frame.columns)
     print feature_list, len(feature_list)
     mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
@@ -57,6 +57,7 @@ def main():
     test_array = mapper.fit_transform(test_frame)
 
     validate_frame = pd.get_dummies(validate_frame)
+    validate_frame = validate_frame.drop(['Time'], axis=1)
     feature_list = list(validate_frame.columns)
     print feature_list, len(feature_list)
     mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
@@ -69,9 +70,9 @@ def main():
     print "Validation set (n_col, n_rows)", validation_array.shape
 
     li = [12, 15, 20, 25, 30]
-    for i in range(1,5):
+    for i in range(1):
         print i, "---------------"
-        model_build(li[i-1])
+        model_build(12)
 
 
 def model_build(i):
@@ -79,11 +80,11 @@ def model_build(i):
     encoding_dim = i # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
 
     # this is our input placeholder
-    input_img = Input(shape=(31, ))
+    input_img = Input(shape=(30, ))
     # "encoded" is the encoded representation of the input
-    encoded = Dense(encoding_dim, activation='relu', activity_regularizer=regularizers.activity_l1(10e-5))(input_img)
+    encoded = Dense(encoding_dim, activation='tanh', activity_regularizer=regularizers.activity_l1(10e-4))(input_img)
     # "decoded" is the lossy reconstruction of the input
-    decoded = Dense(31, activation='relu')(encoded)
+    decoded = Dense(30, activation='tanh')(encoded)
 
     # this model maps an input to its reconstruction
     autoencoder = Model(input=input_img, output=decoded)
@@ -98,13 +99,13 @@ def model_build(i):
     # create the decoder model
     decoder = Model(input=encoded_input, output=decoder_layer(encoded_input))
 
-    autoencoder.compile(optimizer='adadelta', loss='mean_squared_error')
-    # autoencoder.compile(optimizer='adam', loss='mean_squared_error')
+    autoencoder.compile(optimizer='adam', loss='mean_squared_error')
+    # autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
 
 
     hist = autoencoder.fit(train_array, train_array,
                     nb_epoch=10,
-                    batch_size=100,
+                    batch_size=10,
                     shuffle=True,
                     validation_data=(validation_array, validation_array))
 
@@ -124,7 +125,7 @@ def model_build(i):
     fp = 0
     tn = 0
     fn = 0
-    lbl_list = test_frame["Class"]
+    lbl_list = test_array["Class"]
     quntile = 0.998338
 
     threshold = get_percentile_threshold(quntile, recons_err)

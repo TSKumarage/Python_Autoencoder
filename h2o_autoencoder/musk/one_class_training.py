@@ -8,7 +8,7 @@ from h2o.estimators.deeplearning import H2OAutoEncoderEstimator
 
 global validate_frame
 global train_frame
-global test_frame
+global test_array
 global uncorrected_train_frame
 
 
@@ -19,7 +19,7 @@ def main():
     recall = 0
     global validate_frame
     global train_frame
-    global test_frame
+    global test_array
     global uncorrected_train_frame
 
     validate_data = "/home/wso2123/My Work/Datasets/musk/musk_large/clean2_validate.csv"
@@ -72,21 +72,21 @@ def model_build(i):
 
     # Compute reconstruction, error with the Anomaly
     # detection app (MSE between output and input layers)
-    recon_error = anomaly_model.anomaly(test_frame, False)
+    recon_error = anomaly_model.anomaly(test_array, False)
     error_str = recon_error.get_frame_data()
 
     err_list = map(float, error_str.split("\n")[1:-1])
     threshold = max_err
     print "The following test points are reconstructed with an error greater than: ", threshold
     print "Train", train_frame.ncol
-    print "Test", test_frame.ncol
+    print "Test", test_array.ncol
 
     tp = 0
     fp = 0
     tn = 0
     fn = 0
 
-    lbl_list = test_frame[test_frame.ncol-1]
+    lbl_list = test_array[test_array.ncol - 1]
     print lbl_list[1, 0] == 0
     print "done"
 
@@ -106,7 +106,7 @@ def model_build(i):
 
     print "Training dataset size: ", train_frame.nrow
     print "Validation dataset size: ", validate_frame.nrow
-    print "Test datset size: ", test_frame.nrow
+    print "Test datset size: ", test_array.nrow
     print "maximum error in test data set : ", max(err_list)
     print "TP :", tp, "/n"
     print "FP :", fp, "/n"

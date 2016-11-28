@@ -14,7 +14,7 @@ tf.python.control_flow_ops = tf
 global complete_frame
 global train_frame
 global validate_frame
-global test_frame
+global test_array
 global train_array
 global test_array
 global validation_array
@@ -24,7 +24,7 @@ def main():
     global complete_frame
     global train_frame
     global validate_frame
-    global test_frame
+    global test_array
     global train_array
     global test_array
     global validation_array
@@ -130,7 +130,7 @@ def model_build(i):
     fp = 0
     tn = 0
     fn = 0
-    lbl_list = test_frame["C42_normal."]
+    lbl_list = test_array["C42_normal."]
     quntile = 0.95
 
     threshold = get_percentile_threshold(quntile, recons_err)
