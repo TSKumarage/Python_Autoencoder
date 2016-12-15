@@ -33,6 +33,7 @@ def main():
     test_data = h2o.import_file(test_dataset)
     one_class_train = h2o.import_file(one_class_dataset)
 
+    print [train_data.names[0],train_data.names[train_data.ncol-1]]
     recall = 10
     index = 1
     for i in range(1):
@@ -40,7 +41,6 @@ def main():
         if new_recall > recall:
             recall = new_recall
             index = i
-
 
 
 def model_build(i):
@@ -54,10 +54,11 @@ def model_build(i):
         sparse=True,
         l1=1e-4,
         epochs=10,
-        ignored_columns=train_data.names[0]
+        ignored_columns=[one_class_train.names[0],one_class_train.names[one_class_train.ncol-1]]
+
     )
 
-    anomaly_model.train(x=train_data.names, training_frame=train_data, validation_frame=validate_data)
+    anomaly_model.train(x=one_class_train.names, training_frame=one_class_train, validation_frame=validate_data)
 
     recon_error = anomaly_model.anomaly(train_data, False)
     error_str = recon_error.get_frame_data()

@@ -17,7 +17,7 @@ def main():
     global test_data
     global one_class_train
 
-    full_dataset = "/home/wso2123/My  Work/Datasets/Webscope/A3Benchmark/A3Benchmark_full.csv"
+    full_dataset = "/home/wso2123/My  Work/Datasets/Webscope/A4Benchmark/A4Benchmark_full.csv"
     # train_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/uncorrected_train.csv"
     # validate_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/validate.csv"
     # test_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/test.csv"
