@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import pandas as pd
-from sklearn import metrics, preprocessing
+from sklearn_pca import metrics, preprocessing
 from sklearn_pandas import DataFrameMapper
 
 from keras.layers import Input, Dense, Lambda

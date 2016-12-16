@@ -1,17 +1,17 @@
-# Load the Pima Indians diabetes dataset from CSV URL
-import numpy as np
 import pandas as pd
 from keras.optimizers import *
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras import regularizers
-from sklearn_pca import preprocessing
-from sklearn_pca.model_selection import GridSearchCV
+from sklearn import preprocessing
+from sklearn.model_selection import GridSearchCV
 from keras.layers import Input, Dense, Dropout
 from keras.models import Sequential
 from keras.constraints import maxnorm
 from sklearn_pandas import DataFrameMapper
 import tensorflow as tf
 tf.python.control_flow_ops = tf
+
+# <editor-fold desc="Global variables">
 
 global complete_frame
 global train_frame
@@ -24,6 +24,8 @@ input_dim = 32
 inter_dim = 13
 
 
+# </editor-fold>
+
 def main():
     global complete_frame
     global train_frame
@@ -35,12 +37,14 @@ def main():
     global input_dim
     global inter_dim
 
-
-
+    # <editor-fold desc="file paths">
     complete_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
     train_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/uncorrected_train.csv"
     validate_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/validate.csv"
     test_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/test.csv"
+    # </editor-fold>
+
+    # <editor-fold desc="Data frame processing">
 
     # load the CSV file as a numpy matrix
     complete_frame = pd.read_csv(complete_data)
@@ -71,6 +75,9 @@ def main():
     mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
                                               preprocessing.Normalizer()])])
     validation_array = mapper.fit_transform(validate_frame)
+
+    # </editor-fold>
+
 
     # batch_size_tune()
     # learning_rate_tune(100,10)

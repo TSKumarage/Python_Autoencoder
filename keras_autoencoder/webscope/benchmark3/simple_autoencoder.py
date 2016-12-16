@@ -1,60 +1,38 @@
+# Load the Pima Indians diabetes dataset from CSV URL
 import numpy as np
-import matplotlib.pyplot as plt
-
 import pandas as pd
-from sklearn import metrics, preprocessing
-from sklearn_pandas import DataFrameMapper
-
-from keras.layers import Input, Dense, Lambda
+from sklearn_pca import metrics
 from keras.models import Model
-from keras import backend as K
-from keras import objectives
-from keras.datasets import mnist
-
+from sklearn_pca import decomposition
+from keras import regularizers
+from sklearn_pca import preprocessing
+from keras.layers import Input, Dense
+from sklearn_pandas import DataFrameMapper
+import tensorflow as tf
+tf.python.control_flow_ops = tf
 
 global complete_frame
 global train_frame
 global validate_frame
-global test_array
+global test_frame
 global train_array
 global test_array
 global validation_array
-global z_log_var
-global z_mean
-global batch_size
-global original_dim
-global latent_dim
-global intermediate_dim
-global nb_epoch
-global epsilon_std
 
 
 def main():
     global complete_frame
     global train_frame
     global validate_frame
-    global test_array
+    global test_frame
     global train_array
     global test_array
     global validation_array
-    global batch_size
-    global original_dim
-    global latent_dim
-    global intermediate_dim
-    global nb_epoch
-    global epsilon_std
 
-    batch_size = 100
-    original_dim = 31
-    latent_dim = 5
-    intermediate_dim = 13
-    nb_epoch = 10
-    epsilon_std = 1.0
-
-    # complete_data = "/home/wso2123/My  Work/Datasets/KDD Cup/kddcup.data_10_percent_corrected"
-    train_data = "/home/wso2123/My  Work/Datasets/Creditcard/uncorrected_train.csv"
-    validate_data = "/home/wso2123/My  Work/Datasets/Creditcard/validate.csv"
-    test_data = "/home/wso2123/My  Work/Datasets/Creditcard/test.csv"
+    train_data = "/home/wso2123/My  Work/Datasets/Webscope/A3Benchmark/uncorrected_train.csv"
+    validate_data = "/home/wso2123/My  Work/Datasets/Webscope/A3Benchmark/validate.csv"
+    test_data = "/home/wso2123/My  Work/Datasets/Webscope/A3Benchmark/test.csv"
+    one_class_data = "/home/wso2123/My  Work/Datasets/Webscope/A3Benchmark/train.csv"
 
     # load the CSV file as a numpy matrix
     # complete_frame = pd.read_csv(complete_data)
@@ -63,85 +41,94 @@ def main():
     test_frame = pd.read_csv(test_data)
 
     train_frame = pd.get_dummies(train_frame)
-    # train_frame = train_frame.drop(['Time'], axis=1)
     feature_list = list(train_frame.columns)
     print feature_list, len(feature_list)
     mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
                                               preprocessing.Normalizer()])])
     train_array = mapper.fit_transform(train_frame)
+    # train_array = train_frame.as_matrix()
 
     test_frame = pd.get_dummies(test_frame)
-    # test_frame = test_frame.drop(['Time'], axis=1)
     feature_list = list(test_frame.columns)
     print feature_list, len(feature_list)
     mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
                                               preprocessing.Normalizer()])])
     test_array = mapper.fit_transform(test_frame)
+    # test_array = test_frame.as_matrix()
 
     validate_frame = pd.get_dummies(validate_frame)
-    # validate_frame = validate_frame.drop(['Time'], axis=1)
     feature_list = list(validate_frame.columns)
     print feature_list, len(feature_list)
     mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
                                               preprocessing.Normalizer()])])
     validation_array = mapper.fit_transform(validate_frame)
+    # validation_array = validate_frame.as_matrix()
 
     print "Training set (n_col, n_rows)", train_array.shape
     print "Testing set (n_col, n_rows)", test_array.shape
     print "Validation set (n_col, n_rows)", validation_array.shape
 
-    for i in range(1):
+    li = [12, 15, 20, 25, 30]
+    for i in range(1,4):
         print i, "---------------"
         model_build(i)
 
 
 def model_build(i):
-    global z_log_var
-    global z_mean
-    global latent_dim
+    # this is the size of our encoded representations
+    encoding_dim = i # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
 
-    # latent_dim = i
-    x = Input(shape=(original_dim,))
-    h = Dense(intermediate_dim, activation='relu')(x)
-    z_mean = Dense(latent_dim)(h)
-    z_log_var = Dense(latent_dim)(h)
+    # this is our input placeholder
+    input_img = Input(shape=(8, ))
+    # "encoded" is the encoded representation of the input
+    encoded = Dense(encoding_dim, activation='tanh', activity_regularizer=regularizers.activity_l1(10e-4))(input_img)
+    # "decoded" is the lossy reconstruction of the input
+    decoded = Dense(8, activation='tanh')(encoded)
 
-    # note that "output_shape" isn't necessary with the TensorFlow backend
-    z = Lambda(sampling, output_shape=(latent_dim,))([z_mean, z_log_var])
+    # this model maps an input to its reconstruction
+    autoencoder = Model(input=input_img, output=decoded)
 
-    # we instantiate these layers separately so as to reuse them later
-    decoder_h = Dense(intermediate_dim, activation='relu')
-    decoder_mean = Dense(original_dim, activation='sigmoid')
-    h_decoded = decoder_h(z)
-    x_decoded_mean = decoder_mean(h_decoded)
+    # this model maps an input to its encoded representation
+    encoder = Model(input=input_img, output=encoded)
 
-    vae = Model(x, x_decoded_mean)
-    vae.compile(optimizer='rmsprop', loss=vae_loss)
+    # create a placeholder for an encoded (32-dimensional) input
+    encoded_input = Input(shape=(encoding_dim,))
+    # retrieve the last layer of the autoencoder model
+    decoder_layer = autoencoder.layers[-1]
+    # create the decoder model
+    decoder = Model(input=encoded_input, output=decoder_layer(encoded_input))
 
-    vae.fit(train_array, train_array,
-            shuffle=True,
-            nb_epoch=nb_epoch,
-            batch_size=batch_size,
-            validation_data=(validation_array, validation_array))
+    autoencoder.compile(optimizer='adam', loss='mean_squared_error')
+    # autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    decoded_output = vae.predict(test_array, batch_size=batch_size)
+
+    hist = autoencoder.fit(train_array, train_array,
+                    nb_epoch=100,
+                    batch_size=100,
+                    shuffle=True,
+                    validation_data=(validation_array, validation_array))
+
+    # encode and decode some digits
+    # note that we take them from the *test* set
+    encoded_imgs = encoder.predict(test_array)
+    decoded_imgs = decoder.predict(encoded_imgs)
 
     for i in range(len(test_array[0])):
-        print test_array[0][i], " ==> ", decoded_output[0][i]
-
+        print test_array[0][i], " ==> ", decoded_imgs[0][i]
 
     recons_err = []
     for i in range(len(test_array)):
-        recons_err.append(metrics.mean_squared_error(test_array[i], decoded_output[i]))
+        recons_err.append(metrics.mean_squared_error(test_array[i], decoded_imgs[i]))
 
     tp = 0
     fp = 0
     tn = 0
     fn = 0
-    lbl_list = test_array["Class"]
-    quntile = 0.998
+    lbl_list = test_frame["anomaly"]
+    quntile = 0.995
 
     threshold = get_percentile_threshold(quntile, recons_err)
+
     for i in range(len(recons_err)):
         if recons_err[i] > threshold:
             if lbl_list[i] == 0:
@@ -167,18 +154,7 @@ def model_build(i):
         print "F1 score (harmonic mean of precision and recall (sensitivity)) (2TP / (2TP + FP + FN)) :", 200 * float(
             tp) / (2 * tp + fp + fn)
 
-
-def sampling(args):
-    z_mean, z_log_var = args
-    epsilon = K.random_normal(shape=(latent_dim,), mean=0.,
-                              std=epsilon_std)
-    return z_mean + K.exp(z_log_var / 2) * epsilon
-
-
-def vae_loss(x, x_decoded_mean):
-    xent_loss = original_dim * objectives.binary_crossentropy(x, x_decoded_mean)
-    kl_loss = - 0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
-    return xent_loss + kl_loss
+    return recall
 
 
 def get_percentile_threshold(quntile, data_frame):
@@ -187,9 +163,3 @@ def get_percentile_threshold(quntile, data_frame):
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-

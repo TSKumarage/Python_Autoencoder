@@ -4,7 +4,7 @@ from keras.models import Model
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn import metrics, preprocessing
+from sklearn_pca import metrics, preprocessing
 from sklearn_pandas import DataFrameMapper
 
 from keras.layers import Input, Dense, Lambda

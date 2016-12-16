@@ -1,11 +1,11 @@
 # Load the Pima Indians diabetes dataset from CSV URL
 import numpy as np
 import pandas as pd
-from sklearn import metrics
+from sklearn_pca import metrics
 from keras.models import Model
-from sklearn import decomposition
+from sklearn_pca import decomposition
 from keras import regularizers
-from sklearn import preprocessing
+from sklearn_pca import preprocessing
 from keras.layers import Input, Dense, Convolution2D, MaxPooling2D, UpSampling2D
 from keras.models import Model
 from sklearn_pandas import DataFrameMapper
