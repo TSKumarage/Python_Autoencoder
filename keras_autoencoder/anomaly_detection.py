@@ -38,7 +38,7 @@ def main():
     train_frame = pd.read_csv(train_dataset)
     validate_frame = pd.read_csv(validate_dataset)
     test_frame = pd.read_csv(test_dataset)
-    one_class_frame = pd.read_csv(one_class_dataset)
+    one_class_train_frame = pd.read_csv(one_class_dataset)
 
     # Postprocessing
 
@@ -68,7 +68,7 @@ def main():
     # <editor-fold desc="Normal learning">
 
     # Build an normal learning autoencoder model
-    anomaly_model = model_build(train_frame, validate_frame)
+    anomaly_model = model_build(train_frame, validate_frame, "simple")
 
     # Get the prediction for the test dataset
     predict_anomaly(anomaly_model, test_frame, 0.995, "Class", "0")
@@ -78,7 +78,7 @@ def main():
     # <editor-fold desc="one class learning">
 
     # Build an one_class learning autoencoder model
-    anomaly_model = model_build(one_class_train_frame, validate_frame)
+    anomaly_model = model_build(train_frame, validate_frame, "simple")
 
     # Get the prediction for the test dataset
     predict_anomaly(anomaly_model, test_frame, 0.995, 1, "0")

@@ -18,6 +18,7 @@ def main():
     # split data into train test validate frames
     split_datasets(full_frame, normal_frame, dir_path)
 
+
 # prepare test, train and validate data sets
 def split_datasets(full_frame, normal_frame, dir_path):
 
