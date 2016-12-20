@@ -46,7 +46,7 @@ def main():
     anomaly_model = model_build(train_frame, validate_frame)
 
     # Get the prediction for the test dataset
-    predict_anomaly(anomaly_model, test_frame, 0.995, 1, "0")
+    predict_anomaly(anomaly_model, test_frame, 0.995, train_frame.ncol -1, "0")
 
     # </editor-fold>
 
@@ -56,12 +56,12 @@ def main():
     anomaly_model = model_build(one_class_train_frame, validate_frame)
 
     # Get the prediction for the test dataset
-    predict_anomaly(anomaly_model, test_frame, 0.995, 1, "0")
+    predict_anomaly(anomaly_model, test_frame, 0.995, train_frame.ncol -1, "0")
 
     # </editor-fold>
 
 
-def model_build(train_data,validate_data, learn_method):
+def model_build(train_data,validate_data):
 
     # <editor-fold desc="Define autoencoder model">
 

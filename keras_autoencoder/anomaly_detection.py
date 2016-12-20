@@ -40,7 +40,7 @@ def main():
     test_frame = pd.read_csv(test_dataset)
     one_class_train_frame = pd.read_csv(one_class_dataset)
 
-    # Postprocessing
+    # Pre processing
 
     train_frame = pd.get_dummies(train_frame)                   # Convert categorical data into numeric
     train_frame = train_frame.drop(['Time'], axis=1)

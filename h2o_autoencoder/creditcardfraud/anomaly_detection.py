@@ -54,11 +54,11 @@ def model_build(i):
         sparse=True,
         l1=1e-4,
         epochs=10,
-        ignored_columns=[one_class_train.names[0],one_class_train.names[one_class_train.ncol-1]]
+        ignored_columns=[train_data.names[0],train_data.names[train_data.ncol-1]]
 
     )
 
-    anomaly_model.train(x=one_class_train.names, training_frame=one_class_train, validation_frame=validate_data)
+    anomaly_model.train(x=train_data.names, training_frame=train_data, validation_frame=validate_data)
 
     recon_error = anomaly_model.anomaly(train_data, False)
     error_str = recon_error.get_frame_data()
@@ -73,7 +73,7 @@ def model_build(i):
     error_str = recon_error.get_frame_data()
 
     err_list = map(float, error_str.split("\n")[1:-1])
-    quntile = 0.998338
+    quntile = 0.99
 
     threshold = max_err*quntile
     threshold = get_percentile_threshold(quntile, err_list)
@@ -89,7 +89,6 @@ def model_build(i):
 
     data_str = test_data.get_frame_data()
     lbl_list = data_str.split("\n")
-
 
     for i in tqdm(range(len(recon_error) - 1)):
         if err_list[i] > threshold:
