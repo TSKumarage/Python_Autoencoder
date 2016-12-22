@@ -4,16 +4,17 @@ from tqdm import tqdm
 
 def main():
     # Dataset paths
-    full_data = "/home/wso2123/My  Work/Datasets/Creditcard/creditcard.csv"
-    dir_path = "/home/wso2123/My  Work/Datasets/Creditcard"
+    full_data = "/home/wso2123/My  Work/Datasets/Test/creditcard.csv"
+    dir_path = "/home/wso2123/My  Work/Datasets/Test"
 
     full_frame = pd.read_csv(full_data)
 
     # prepare normal data file
-    split_normal_data(full_frame, dir_path, 31, "0")
+    print "preparing normal data file"
+    split_normal_data(full_frame, dir_path, 30, "0")
 
     # open normal file
-    normal_frame = pd.read_csv(dir_path+"normal.csv")
+    normal_frame = pd.read_csv(dir_path+"/normal.csv")
 
     # split data into train test validate frames
     split_datasets(full_frame, normal_frame, dir_path)
