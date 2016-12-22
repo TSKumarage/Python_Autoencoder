@@ -8,10 +8,9 @@ def main():
     dir_path = "/home/wso2123/My  Work/Datasets/Test"
 
     full_frame = pd.read_csv(full_data)
-
     # prepare normal data file
     print "preparing normal data file"
-    split_normal_data(full_frame, dir_path, 30, "0")
+    split_normal_data(full_frame, dir_path, 30, 0)
 
     # open normal file
     normal_frame = pd.read_csv(dir_path+"/normal.csv")
@@ -61,6 +60,19 @@ def get_pandas_frame(frame, res_index, lbl):
             new_frame = new_frame.append(df1)
     return new_frame
 
+
+def get_normal_frame(frame):
+    str_data = frame.get_frame_data()
+    lbl_list = str_data.split("\n")
+    # lbl_list = frame["C42"]
+    test_frame=pd.DataFrame(frame)
+    new_frame = pd.DataFrame()
+
+    for i in tqdm(range(len(lbl_list))):
+        if lbl_list[i].split(",")[-1] == "\"normal.\"":
+            df1 = test_frame.iloc[i, :]
+            new_frame = new_frame.append(df1)
+    return new_frame
 
 if __name__ == '__main__':
     main()

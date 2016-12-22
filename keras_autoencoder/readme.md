@@ -8,42 +8,23 @@ keras autoencoder model is a simple feed forward autoencoder neural network whic
 3. Variational autoencoder
 4. Sequential autoencoder
 
-
 ## Prerequisites
 
-- Download the latest [python](https://www.python.org/downloads/) source release
 - Download latest [keras](https://keras.io/#installation)  version
-- Get the compatible version of [pandas](http://pandas.pydata.org/pandas-docs/stable/install.html) into your python version
+
+        sudo pip install keras
+
 - Get [Sklearn-pandas](https://github.com/paulgb/sklearn-pandas) module
-- Sample dataset. ([Credit card fraud data](https://www.kaggle.com/dalpozz/creditcardfraud))
+
+        pip install sklearn-pandas
+
 ## Execution
 
-### 1) Pre processing data
-
-1. **[preprocessor.py](https://github.com/TSKumarage/Python_Autoencoder/blob/master/h2o_autoencoder/preprocessor.py)** can be used to divide the given dataset into train, validatation and test datasets. Set the corresponding file paths
-
-        # Dataset paths
-        full_data = "full dataset path"
-        dir_path = "directory path"
-
-2. Then prepare the normal data file by removing the anomalies from the full dataset. (This normal file is used for creating validation sets and one class leaning datasets). Set the corresponding arguments to the split_normal_data() function.
-
-        # prepare normal data file
-        split_normal_data(full_frame, dir_path, response_column, "normal_label")
-
-3. Execute the file preprocessor.py
-
-### 2) Run the anomaly detection auteoncoder model
+### 1) Run the anomaly detection auteoncoder model
 
 1. **[anomaly_detection.py](https://github.com/TSKumarage/Python_Autoencoder/blob/master/keras_autoencoder/anomaly_detection.py)** includes the necessary methods to create an autoencoder model using specified hyper parameters and other configurations.
 
-2. Define the file paths of the corresponding train(normal and one class), validate and test datafiles.
-
-        # Here define the train, test and validate dataset file paths.
-        train_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/uncorrected_train.csv"
-        validate_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/validate.csv"
-        test_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/test.csv"
-        one_class_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/train.csv"
+2. At the main method define the directory path (path used for preprocessor.py)
 
 3. Prepare numpy arrays (train, test, validate) from data files using Sklearn-pandas module utilizing Sklearn preprocessing methods.
 
@@ -69,6 +50,7 @@ keras autoencoder model is a simple feed forward autoencoder neural network whic
         mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
                                                   preprocessing.Normalizer()])])            # preprocess data using sklearn preprocessor
         validation_array = mapper.fit_transform(validate_frame)     # convert the pandas frame to a numpy array
+
 4. Define the autoencoder type in the model_build() method. According to the autoencoder type hyper parameters and other configurations should be defined.
 
         nb_epoch
@@ -91,7 +73,7 @@ keras autoencoder model is a simple feed forward autoencoder neural network whic
 
 5. After defining above methods in main  method of the anomaly_detection.py execute and get the accuracy measures. Example is given in the code using creadit card fraud data set
 
-### 3) Hyper parameter tuning
+### 2) Hyper parameter tuning
 
 1. **[hyperparameter_grid_search.py](https://github.com/TSKumarage/Python_Autoencoder/blob/master/keras_autoencoder/hyperparameter_grid_search.py)** includes the necessary methods to create an keras grid search model using specified hyper parameters and other configurations that needed to be checked.
 

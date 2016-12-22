@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from sklearn import metrics
 from keras.models import Model
 from sklearn import decomposition
@@ -12,33 +13,39 @@ import tensorflow as tf
 tf.python.control_flow_ops = tf
 
 global batch_size
-global original_dim
+global input_dim
 global latent_dim
-global intermediate_dim
+global encoding_dim
 global nb_epoch
 global epsilon_std
+global timesteps
 
 
 # main method
 def main():
+    global batch_size
+    global input_dim
+    global latent_dim
+    global encoding_dim
+    global nb_epoch
+    global epsilon_std
+    global timesteps
 
-    # <editor-fold desc="file paths">
+    # <editor-fold desc="directory path">
 
-    # Here define the train, test and validate dataset file paths.
-    train_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/uncorrected_train.csv"
-    validate_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/validate.csv"
-    test_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/test.csv"
-    one_class_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/train.csv"
+    # Here define the directory path, test and validate data set file paths.
+
+    dir_path = "/home/wso2123/My  Work/Datasets/Test"
 
     # </editor-fold>
 
     # <editor-fold desc="Data frame processing">
 
     # load the CSV files as a pandas frames
-    train_frame = pd.read_csv(train_dataset)
-    validate_frame = pd.read_csv(validate_dataset)
-    test_frame = pd.read_csv(test_dataset)
-    one_class_train_frame = pd.read_csv(one_class_dataset)
+    train_frame = pd.read_csv(dir_path + "/uncorrected_train.csv")
+    validate_frame =pd.read_csv(dir_path + "/validate.csv")
+    test_frame = pd.read_csv(dir_path + "/test.csv")
+    one_class_train_frame = pd.read_csv(dir_path + "/train.csv")
 
     # Pre processing
 
@@ -48,6 +55,13 @@ def main():
     mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
                                               preprocessing.Normalizer()])])            # preprocess data using sklearn preprocessor
     train_array = mapper.fit_transform(train_frame)             # convert the pandas frame to a numpy array
+
+    one_class_train_frame = pd.get_dummies(one_class_train_frame)  # Convert categorical data into numeric
+    one_class_train_frame = one_class_train_frame.drop(['Time'], axis=1)
+    feature_list = list(one_class_train_frame.columns)
+    mapper = DataFrameMapper([(feature_list, [preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0),
+                                              preprocessing.Normalizer()])])  # preprocess data using sklearn preprocessor
+    oc_train_array = mapper.fit_transform(one_class_train_frame)  # convert the pandas frame to a numpy array
 
     test_frame = pd.get_dummies(test_frame)                     # Convert categorical data into numeric
     test_frame = test_frame.drop(['Time'], axis=1)
@@ -65,37 +79,37 @@ def main():
 
     # </editor-fold>
 
+    # Define hyper parameters
+    batch_size = 100
+    input_dim = 30  # this is the size of our encoded representations
+    encoding_dim = 12
+    latent_dim = 12
+    timesteps = 5
+    nb_epoch = 3
+    epsilon_std = 1.0
+
     # <editor-fold desc="Normal learning">
 
     # Build an normal learning autoencoder model
-    anomaly_model = model_build(train_frame, validate_frame, "simple")
+    anomaly_model = model_build(train_array, validation_array, "vae")
 
     # Get the prediction for the test dataset
-    predict_anomaly(anomaly_model, test_frame, 0.995, "Class", "0")
+    predict_anomaly(anomaly_model, test_array, test_frame, 0.995, "Class", 0)
 
-    # </editor-fold>
-
-    # <editor-fold desc="one class learning">
-
-    # Build an one_class learning autoencoder model
-    anomaly_model = model_build(train_frame, validate_frame, "simple")
-
-    # Get the prediction for the test dataset
-    predict_anomaly(anomaly_model, test_frame, 0.995, 1, "0")
-
-    # </editor-fold>
+    # # </editor-fold>
+    #
+    # # <editor-fold desc="one class learning">
+    #
+    # # Build an one_class learning autoencoder model
+    # anomaly_model = model_build(oc_train_array, validation_array, "simple")
+    #
+    # # Get the prediction for the test dataset
+    # predict_anomaly(anomaly_model, test_array, 0.995, 1, "0")
+    #
+    # # </editor-fold>
 
 
 def model_build(train_data,validate_data, type):
-
-    # Define hyper parameters
-    batch_size = 100
-    input_dim = 30           # this is the size of our encoded representations
-    encoding_dim =12
-    latent_dim = 12
-    timesteps = 5
-    nb_epoch = 10
-    epsilon_std = 1.0
 
     if type == "simple":
 
@@ -129,8 +143,8 @@ def model_build(train_data,validate_data, type):
         # <editor-fold desc="Train defined model">
 
         autoencoder.fit(train_data, train_data,
-                           nb_epoch=10,
-                           batch_size=10,
+                           nb_epoch=nb_epoch,
+                           batch_size=batch_size,
                            shuffle=True,
                            validation_data=(validate_data, validate_data))
 
@@ -168,8 +182,8 @@ def model_build(train_data,validate_data, type):
         # <editor-fold desc="Train defined model">
 
         autoencoder.fit(train_data, train_data,
-                        nb_epoch=10,
-                        batch_size=10,
+                        nb_epoch=nb_epoch,
+                        batch_size=batch_size,
                         shuffle=True,
                         validation_data=(validate_data, validate_data))
 
@@ -233,8 +247,8 @@ def model_build(train_data,validate_data, type):
         # <editor-fold desc="Train defined model">
 
         autoencoder.fit(train_data, train_data,
-                        nb_epoch=10,
-                        batch_size=100,
+                        nb_epoch=nb_epoch,
+                        batch_size=batch_size,
                         shuffle=True,
                         validation_data=(validate_data, validate_data))
 
@@ -243,12 +257,12 @@ def model_build(train_data,validate_data, type):
     return autoencoder
 
 
-def predict_anomaly(anomaly_model, test_data, percentile, response, normal_lbl):
+def predict_anomaly(anomaly_model, test_data, test_frame, percentile, response, normal_lbl):
 
     # <editor-fold desc="Calculate reconstruction errors">
 
     # Compute reconstruction, error with the Anomaly
-    decoded_output = anomaly_model.predict(test_data, batch_size=batch_size)
+    decoded_output = anomaly_model.predict(test_data)
 
     recons_err = []
     for i in range(len(test_data)):
@@ -275,7 +289,7 @@ def predict_anomaly(anomaly_model, test_data, percentile, response, normal_lbl):
     fn = 0
 
     # Get the label column from the test data
-    lbl_list = test_data[response]
+    lbl_list = test_frame[response]
 
     # Compare the label with our prediction
     for i in range(len(recons_err)):
@@ -322,7 +336,7 @@ def sampling(args):
 
 
 def vae_loss(x, x_decoded_mean):
-    xent_loss = original_dim * objectives.binary_crossentropy(x, x_decoded_mean)
+    xent_loss = input_dim * objectives.binary_crossentropy(x, x_decoded_mean)
     kl_loss = - 0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
     return xent_loss + kl_loss
 

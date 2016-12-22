@@ -10,13 +10,11 @@ from h2o.estimators.deeplearning import H2OAutoEncoderEstimator
 # main method
 def main():
 
-    # <editor-fold desc="file paths">
+    # <editor-fold desc="directory path">
 
-    # Here define the train, test and validate dataset file paths.
-    train_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/uncorrected_train.csv"
-    validate_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/validate.csv"
-    test_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/test.csv"
-    one_class_dataset = "/home/wso2123/My  Work/Datasets/Creditcard/train.csv"
+    # Here define the directory path, test and validate data set file paths.
+
+    dir_path = "/home/wso2123/My  Work/Datasets/Test"
 
     # </editor-fold>
 
@@ -33,10 +31,10 @@ def main():
     # <editor-fold desc="Data frame importing">
 
     # import the data sets into h2o frames
-    train_frame = h2o.import_file(train_dataset)
-    validate_frame = h2o.import_file(validate_dataset)
-    test_frame = h2o.import_file(test_dataset)
-    one_class_train_frame = h2o.import_file(one_class_dataset)
+    train_frame = h2o.import_file(dir_path+"/uncorrected_train.csv")
+    validate_frame = h2o.import_file(dir_path+"/validate.csv")
+    test_frame = h2o.import_file(dir_path+"/Creditcard/test.csv")
+    one_class_train_frame = h2o.import_file(dir_path+ "/train.csv")
 
     # </editor-fold>
 
