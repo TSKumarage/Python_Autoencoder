@@ -27,6 +27,10 @@ h2o autoencoder model is a simple feed forward autoencoder neural network which 
 
 2. At the main method define the directory path (path used for preprocessor.py)
 
+        # Here define the directory path, test and validate data set file paths.
+
+          dir_path = "/home/wso2123/My  Work/Datasets/Test"
+
 3. Define the autoencoder model hyper parameters at the model_build() method.
 
         anomaly_model = H2OAutoEncoderEstimator (
@@ -64,7 +68,12 @@ Below are the important hyperparameters that needs to be defined before executin
 
         predict_anomaly(anomaly_model, test_data, percentile, response_index, normal_lbl)
 
-5. After defining above methods in main  method of the anomaly_detection.py execute and get the accuracy measures. Example is given in the code using creadit card fraud data set.
+5. After defining above methods in the main  method of the anomaly_detection.py execute and get the accuracy measures. Example is given in the code using creadit card fraud data set.
+
+6. Inorder to train the autoencoder using One class learning method instead of sending train frame into model_build(), send one_class_train_frame.
+
+        # Build an one_class learning autoencoder model
+        anomaly_model = model_build(one_class_train_frame, validate_frame)
 
 ### 2) Hyper parameter tuning
 

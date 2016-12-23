@@ -10,6 +10,7 @@ from keras.layers import Input, Dense , Lambda, K, LSTM, RepeatVector
 from keras import objectives
 from sklearn_pandas import DataFrameMapper
 import tensorflow as tf
+
 tf.python.control_flow_ops = tf
 
 global batch_size
@@ -46,6 +47,8 @@ def main():
     validate_frame =pd.read_csv(dir_path + "/validate.csv")
     test_frame = pd.read_csv(dir_path + "/test.csv")
     one_class_train_frame = pd.read_csv(dir_path + "/train.csv")
+
+    # </editor-fold>
 
     # Pre processing
 
@@ -112,7 +115,7 @@ def main():
 def model_build(train_data,validate_data, type):
 
     if type == "simple":
-
+        print "Training simple autoencoder....."
         # <editor-fold desc="Define simple autoencoder model">
 
         # this is our input placeholder
@@ -151,7 +154,7 @@ def model_build(train_data,validate_data, type):
         # </editor-fold>
 
     elif type == "sparse":
-
+        print "Training Sparse autoencoder....."
         # <editor-fold desc="Define sparse autoencoder model">
 
         # this is our input placeholder
@@ -190,7 +193,7 @@ def model_build(train_data,validate_data, type):
         # </editor-fold>
 
     elif type == "vae":
-
+        print "Training variational autoencoder....."
         # <editor-fold desc="Define variational autoencoder model">
 
         global z_log_var
@@ -228,7 +231,7 @@ def model_build(train_data,validate_data, type):
         # </editor-fold>
 
     elif type == "sequential":
-
+        print "Training sequential autoencoder....."
         # <editor-fold desc="Define variational autoencoder model">
 
         inputs = Input(shape=(timesteps, input_dim))
@@ -265,7 +268,8 @@ def predict_anomaly(anomaly_model, test_data, test_frame, percentile, response, 
     decoded_output = anomaly_model.predict(test_data)
 
     recons_err = []
-    for i in range(len(test_data)):
+    print "Calculating reconstruction errors....."
+    for i in tqdm(range(len(test_data))):
         recons_err.append(metrics.mean_squared_error(test_data[i], decoded_output[i]))
 
     # </editor-fold>
@@ -290,9 +294,9 @@ def predict_anomaly(anomaly_model, test_data, test_frame, percentile, response, 
 
     # Get the label column from the test data
     lbl_list = test_frame[response]
-
+    print "Calculating accuracies....."
     # Compare the label with our prediction
-    for i in range(len(recons_err)):
+    for i in tqdm(range(len(recons_err))):
         if recons_err[i] > threshold:
             if lbl_list[i] == normal_lbl:
                 fp += 1

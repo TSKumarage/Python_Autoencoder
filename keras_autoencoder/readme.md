@@ -73,6 +73,10 @@ keras autoencoder model is a simple feed forward autoencoder neural network whic
 
 5. After defining above methods in main  method of the anomaly_detection.py execute and get the accuracy measures. Example is given in the code using creadit card fraud data set
 
+6. In order to train the autoencoder using One class learning method instead of sending train frame into model_build(), send oc_train_array.
+
+        # Build an one_class learning autoencoder model
+          anomaly_model = model_build(oc_train_array, validation_array, "simple")
 ### 2) Hyper parameter tuning
 
 1. **[hyperparameter_grid_search.py](https://github.com/TSKumarage/Python_Autoencoder/blob/master/keras_autoencoder/hyperparameter_grid_search.py)** includes the necessary methods to create an keras grid search model using specified hyper parameters and other configurations that needed to be checked.

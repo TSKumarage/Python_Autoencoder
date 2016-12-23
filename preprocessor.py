@@ -1,5 +1,7 @@
 import pandas as pd
 from tqdm import tqdm
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def main():
@@ -9,8 +11,8 @@ def main():
 
     full_frame = pd.read_csv(full_data)
     # prepare normal data file
-    print "preparing normal data file"
-    split_normal_data(full_frame, dir_path, 30, 0)
+
+    split_normal_data(full_data, dir_path, 30, "0", True)
 
     # open normal file
     normal_frame = pd.read_csv(dir_path+"/normal.csv")
@@ -21,7 +23,7 @@ def main():
 
 # prepare test, train and validate data sets
 def split_datasets(full_frame, normal_frame, dir_path):
-
+    print "Creating train, validation and test data files....."
     sample_ratio = 1 - (len(full_frame) * 0.7) / len(normal_frame)
 
     if sample_ratio < 0.1:
@@ -38,16 +40,27 @@ def split_datasets(full_frame, normal_frame, dir_path):
     test_frame.to_csv(dir_path + "/test.csv", index=False)
     uncorrected_train_frame.to_csv(dir_path + "/uncorrected_train.csv", index=False)
 
+    print "Creating train, validation and test data files....."
+
 
 def get_test_frame(frame, sample_ratio):
     return frame.sample(frac=sample_ratio, random_state=200)
 
 
 # Separate normal data from the full frame and write it to a separate file
-def split_normal_data(full_frame, dir_path, response_index, normal_lbl):
+def split_normal_data(file_path, dir_path, response_index, normal_lbl, headers):
+    print "Creating normal data file....."
+    cnt =0
+    with open(file_path) as data_file:
+        out = open(dir_path+"/normal.csv", "w")
+        for line in tqdm(data_file):
+            if cnt == 0 and headers:
+                out.write(line)
+            lbl = "".join(line.split()).split(",")[response_index]
+            if lbl == "\""+normal_lbl+"\"":
+                out.write(line)
 
-    normal_frame = get_pandas_frame(full_frame, response_index, normal_lbl)
-    normal_frame.to_csv(dir_path + "/normal.csv", index=False)
+        out.close()
 
 
 # Return a pandas frame with only the corresponding lbl

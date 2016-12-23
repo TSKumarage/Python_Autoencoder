@@ -33,7 +33,7 @@ def main():
     # import the data sets into h2o frames
     train_frame = h2o.import_file(dir_path+"/uncorrected_train.csv")
     validate_frame = h2o.import_file(dir_path+"/validate.csv")
-    test_frame = h2o.import_file(dir_path+"/Creditcard/test.csv")
+    test_frame = h2o.import_file(dir_path+"/test.csv")
     one_class_train_frame = h2o.import_file(dir_path+ "/train.csv")
 
     # </editor-fold>
@@ -48,19 +48,20 @@ def main():
 
     # </editor-fold>
 
-    # <editor-fold desc="one class learning">
-
-    # Build an one_class learning autoencoder model
-    anomaly_model = model_build(one_class_train_frame, validate_frame)
-
-    # Get the prediction for the test dataset
-    predict_anomaly(anomaly_model, test_frame, 0.995, train_frame.ncol -1, "0")
-
-    # </editor-fold>
+    # # <editor-fold desc="one class learning">
+    #
+    # # Build an one_class learning autoencoder model
+    # anomaly_model = model_build(one_class_train_frame, validate_frame)
+    #
+    # # Get the prediction for the test dataset
+    # predict_anomaly(anomaly_model, test_frame, 0.995, train_frame.ncol -1, "0")
+    #
+    # # </editor-fold>
 
 
 def model_build(train_data,validate_data):
 
+    print "Building deeplearning model....."
     # <editor-fold desc="Define autoencoder model">
 
     #
@@ -91,7 +92,7 @@ def model_build(train_data,validate_data):
 def predict_anomaly(anomaly_model, test_data, percentile, response_index, normal_lbl):
 
     # <editor-fold desc="Calculate reconstruction errors">
-
+    print "Calculating reconstruction errors......"
     # Compute reconstruction, error with the Anomaly
     # detection app (MSE between output and input layers)
     recon_error = anomaly_model.anomaly(test_data, False)
@@ -122,7 +123,7 @@ def predict_anomaly(anomaly_model, test_data, percentile, response_index, normal
     # Get the label column from the test data
     data_str = test_data.get_frame_data()
     lbl_list = data_str.split("\n")
-
+    print "Calculating accuracies......"
     # Compare the label with our prediction
     for i in tqdm(range(len(recon_error) - 1)):
         if err_list[i] > threshold:

@@ -37,11 +37,22 @@ def main():
     global input_dim
     global inter_dim
 
-    # <editor-fold desc="file paths">
-    complete_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/data.csv"
-    train_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/uncorrected_train.csv"
-    validate_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/validate.csv"
-    test_data = "/home/wso2123/My Work/Datasets/Breast cancer wisconsin/test.csv"
+    # <editor-fold desc="directory path">
+
+    # Here define the directory path, test and validate data set file paths.
+
+    dir_path = "/home/wso2123/My  Work/Datasets/Test"
+
+    # </editor-fold>
+
+    # <editor-fold desc="Data frame processing">
+
+    # load the CSV files as a pandas frames
+    train_frame = pd.read_csv(dir_path + "/uncorrected_train.csv")
+    validate_frame = pd.read_csv(dir_path + "/validate.csv")
+    test_frame = pd.read_csv(dir_path + "/test.csv")
+    one_class_train_frame = pd.read_csv(dir_path + "/train.csv")
+
     # </editor-fold>
 
     # <editor-fold desc="Data frame processing">
